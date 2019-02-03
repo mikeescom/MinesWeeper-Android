@@ -3,55 +3,53 @@ package com.mikeescom.minesweeper.ui;
 import android.content.Intent;
 import android.os.Bundle;
 
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.google.android.material.snackbar.Snackbar;
 import com.mikeescom.minesweeper.R;
+import com.mikeescom.minesweeper.utilities.Constants;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
 
+import android.text.TextUtils;
 import android.view.View;
-import android.view.Menu;
-import android.view.MenuItem;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.TextView;
+import android.widget.Toast;
 
 public class MainActivity extends AppCompatActivity {
+
+    private TextView mSizeOfFieldtitle;
+    private EditText mSizeOfText;
+    private Button mPlay;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
+        initViews();
+        initListeners();
+    }
 
-        FloatingActionButton fab = findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
+
+    private void initViews() {
+        mSizeOfFieldtitle = findViewById(R.id.tv_size_of_field_title);
+        mSizeOfText = findViewById(R.id.et_size_of_field);
+        mPlay = findViewById(R.id.bt_play);
+    }
+
+    private void initListeners() {
+        mPlay.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View view) {
-                Intent intent = new Intent(MainActivity.this, MineField.class);
-                startActivity(intent);
+            public void onClick(View v) {
+                String sizeOfField = mSizeOfText.getText().toString();
+                if (TextUtils.isEmpty(sizeOfField) || (Integer.parseInt(sizeOfField) <= 0)) {
+                    Toast.makeText(MainActivity.this,
+                            "You should add a number grater than zero", Toast.LENGTH_LONG).show();
+                } else {
+                    Intent intent = new Intent(MainActivity.this, MineField.class);
+                    intent.putExtra(Constants.INTENT_SIZE_OF_FIELD, mSizeOfText.getText().toString());
+                    startActivity(intent);
+                }
             }
         });
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
-
-        return super.onOptionsItemSelected(item);
     }
 }
