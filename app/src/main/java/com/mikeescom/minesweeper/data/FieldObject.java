@@ -6,6 +6,7 @@ public class FieldObject {
     private View squareView;
     private Coordinates coordinates;
     private int squareImageToShow = 0;
+    private boolean covered = true;
 
     public FieldObject (View squareView, Coordinates coordinates, int squareImageToShow) {
         this.squareView = squareView;
@@ -37,4 +38,11 @@ public class FieldObject {
         this.squareImageToShow = squareImageToShow;
     }
 
+    public boolean isCovered() {
+        return covered;
+    }
+
+    public void setCovered(boolean covered) {
+        this.covered = covered;
+    }
 }
