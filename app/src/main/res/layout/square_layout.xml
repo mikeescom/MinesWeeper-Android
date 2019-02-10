@@ -3,8 +3,9 @@
     android:orientation="vertical"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content">
-    <Button
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@drawable/custom_button_selector"/>
+    <ImageView
+        android:id="@+id/image_button"
+        android:layout_width="@dimen/square_size"
+        android:layout_height="@dimen/square_size"
+        android:src="@drawable/covered"/>
 </LinearLayout>

@@ -16,7 +16,7 @@
         app:layout_constraintBottom_toTopOf="@+id/et_size_of_field"
         android:textStyle="bold"
         android:textSize="20dp"
-        android:text="Size of the field"/>
+        android:text="Number of mines"/>
     <EditText
         android:id="@+id/et_size_of_field"
         android:layout_width="50dp"
