@@ -9,8 +9,10 @@ import android.util.Log;
 import android.util.TypedValue;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Chronometer;
 import android.widget.GridLayout;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 import com.mikeescom.minesweeper.R;
 import com.mikeescom.minesweeper.data.Coordinates;
@@ -37,6 +39,8 @@ public class MineFieldActivity extends AppCompatActivity {
     private static final int EIGHT = 8;
 
     private GridLayout mMineFiled;
+    private Chronometer mChronometer;
+    private TextView mMinesCounter;
     private int mNumberOfMines;
     private FieldObject[][] mFieldObjects = new FieldObject[HORIZONTAL_SIZE][VERTICAL_SIZE];
 
@@ -57,6 +61,9 @@ public class MineFieldActivity extends AppCompatActivity {
 
     private void initView() {
         mMineFiled = findViewById(R.id.mine_field);
+        mChronometer = findViewById(R.id.chronometer);
+        mMinesCounter = findViewById(R.id.mines_counter);
+        mMinesCounter.setText(mNumberOfMines + "");
     }
 
     private void initFieldObjectsArray() {
@@ -213,6 +220,7 @@ public class MineFieldActivity extends AppCompatActivity {
         squareView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                startChronometer();
                 if (resourceId == R.drawable.uncovered) {
                     unCoverEmptySquares(xPos, yPos);
                 }
@@ -225,9 +233,24 @@ public class MineFieldActivity extends AppCompatActivity {
         itemView.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
-                imageView.setImageDrawable(getResources().getDrawable(R.drawable.flaged));
+                startChronometer();
+                mNumberOfMines--;
+                if (mNumberOfMines >= 0) {
+                    mMinesCounter.setText(mNumberOfMines + "");
+                    imageView.setImageDrawable(getResources().getDrawable(R.drawable.flaged));
+                }
                 return true;
             }
         });
+    }
+
+    public void startChronometer() {
+        if (!mChronometer.isActivated())
+            mChronometer.start();
+    }
+
+    public void stopChronometer() {
+        if (mChronometer.isActivated())
+            mChronometer.stop();
     }
 }
