@@ -41,12 +41,14 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 String sizeOfField = mSizeOfText.getText().toString();
-                if (TextUtils.isEmpty(sizeOfField) || (Integer.parseInt(sizeOfField) <= 0)) {
+                if (TextUtils.isEmpty(sizeOfField) ||
+                        (Integer.parseInt(sizeOfField) <= 0) ||
+                        (Integer.parseInt(sizeOfField) >=200)) {
                     Toast.makeText(MainActivity.this,
-                            "You should add a number grater than zero", Toast.LENGTH_LONG).show();
+                            "You should add a number grater than zero and less than 200", Toast.LENGTH_LONG).show();
                 } else {
-                    Intent intent = new Intent(MainActivity.this, MineField.class);
-                    intent.putExtra(Constants.INTENT_SIZE_OF_FIELD, mSizeOfText.getText().toString());
+                    Intent intent = new Intent(MainActivity.this, MineFieldActivity.class);
+                    intent.putExtra(Constants.INTENT_SIZE_OF_FIELD, Integer.parseInt(sizeOfField));
                     startActivity(intent);
                 }
             }
