@@ -13,6 +13,8 @@ import android.widget.GridLayout;
 import android.widget.ImageView;
 
 import com.mikeescom.minesweeper.R;
+import com.mikeescom.minesweeper.data.Coordinates;
+import com.mikeescom.minesweeper.data.FieldObject;
 import com.mikeescom.minesweeper.utilities.Constants;
 
 import java.util.Random;
@@ -23,8 +25,8 @@ public class MineFieldActivity extends AppCompatActivity {
 
     private static final int HORIZONTAL_SIZE = 12;
     private static final int VERTICAL_SIZE = 20;
-    private static final int EMPTY = -1;
-    private static final int MINE = 100;
+    private static final int EMPTY = 0;
+    private static final int MINE = 9;
     private static final int ONE = 1;
     private static final int TWO = 2;
     private static final int THREE = 3;
@@ -36,13 +38,14 @@ public class MineFieldActivity extends AppCompatActivity {
 
     private GridLayout mMineFiled;
     private int mNumberOfMines;
-    private int[][] mFieldData = new int[12][20];
+    private FieldObject[][] mFieldObjects = new FieldObject[HORIZONTAL_SIZE][VERTICAL_SIZE];
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_mine_field);
         initData();
+        initFieldObjectsArray();
         buildMineFiled();
         initView();
         initMineField();
@@ -56,6 +59,14 @@ public class MineFieldActivity extends AppCompatActivity {
         mMineFiled = findViewById(R.id.mine_field);
     }
 
+    private void initFieldObjectsArray() {
+        for (int j = 0; j < VERTICAL_SIZE ; j++) {
+            for (int i = 0; i < HORIZONTAL_SIZE ; i++) {
+                mFieldObjects[i][j] = new FieldObject(null, new Coordinates(i, j), EMPTY);
+            }
+        }
+    }
+
     private void buildMineFiled() {
         Random rand = new Random();
         int xMinePos;
@@ -64,7 +75,7 @@ public class MineFieldActivity extends AppCompatActivity {
         for (int i = 0 ; i < mNumberOfMines ; i++) {
             xMinePos = rand.nextInt(HORIZONTAL_SIZE);
             yMinePos = rand.nextInt(VERTICAL_SIZE);
-            mFieldData[xMinePos][yMinePos] = MINE;
+            mFieldObjects[xMinePos][yMinePos] = new FieldObject(null, new Coordinates(xMinePos, yMinePos), MINE);
             Log.d(TAG, "Mine set up at: [" + xMinePos + ", " + yMinePos + "]");
         }
         setUpFieldNumbers();
@@ -73,86 +84,136 @@ public class MineFieldActivity extends AppCompatActivity {
     private void setUpFieldNumbers() {
         for (int j = 0; j < VERTICAL_SIZE ; j++) {
             for (int i = 0; i < HORIZONTAL_SIZE ; i++) {
-                if (mFieldData[i][j] == MINE) {
-                    if ((i - 1) >= 0 && (j - 1) >= 0 && (mFieldData[i-1][j-1] != MINE)) { //Start Top position
-                        mFieldData[i-1][j-1] += 1;
+                if (mFieldObjects[i][j].getSquareImageToShow() == MINE) {
+                    if ((i - 1) >= 0 && (j - 1) >= 0 && (mFieldObjects[i-1][j-1].getSquareImageToShow() != MINE)) { //Start Top position
+                        mFieldObjects[i-1][j-1].setSquareImageToShow(mFieldObjects[i-1][j-1].getSquareImageToShow() + 1);
                     }
-                    if ((i - 1) >= 0 && (mFieldData[i-1][j] != MINE)) { //Start position
-                        mFieldData[i-1][j] += 1;
+                    if ((i - 1) >= 0 && (mFieldObjects[i-1][j].getSquareImageToShow() != MINE)) { //Start position
+                        mFieldObjects[i-1][j].setSquareImageToShow(mFieldObjects[i-1][j].getSquareImageToShow() + 1);
                     }
-                    if ((i - 1) >= 0 && (j + 1) < 20 && (mFieldData[i-1][j+1] != MINE)) { //Start Bottom position
-                        mFieldData[i-1][j+1] += 1;
+                    if ((i - 1) >= 0 && (j + 1) < 20 && (mFieldObjects[i-1][j+1].getSquareImageToShow() != MINE)) { //Start Bottom position
+                        mFieldObjects[i-1][j+1].setSquareImageToShow(mFieldObjects[i-1][j+1].getSquareImageToShow() + 1);
                     }
-                    if ((j - 1) >= 0 && (mFieldData[i][j-1] != MINE)) { //Top position
-                        mFieldData[i][j-1] += 1;
+                    if ((j - 1) >= 0 && (mFieldObjects[i][j-1].getSquareImageToShow() != MINE)) { //Top position
+                        mFieldObjects[i][j-1].setSquareImageToShow(mFieldObjects[i][j-1].getSquareImageToShow() + 1);
                     }
-                    if ((i + 1) < 12 && (j - 1) >= 0 && (mFieldData[i+1][j-1] != MINE)) { //Top End position
-                        mFieldData[i+1][j-1] += 1;
+                    if ((i + 1) < 12 && (j - 1) >= 0 && (mFieldObjects[i+1][j-1].getSquareImageToShow() != MINE)) { //Top End position
+                        mFieldObjects[i+1][j-1].setSquareImageToShow(mFieldObjects[i+1][j-1].getSquareImageToShow() + 1);
                     }
-                    if ((i + 1) < 12 && (mFieldData[i+1][j] != MINE)) { //End position
-                        mFieldData[i+1][j] += 1;
+                    if ((i + 1) < 12 && (mFieldObjects[i+1][j].getSquareImageToShow() != MINE)) { //End position
+                        mFieldObjects[i+1][j].setSquareImageToShow(mFieldObjects[i+1][j].getSquareImageToShow() + 1);
                     }
-                    if ((i + 1) < 12 && (j + 1) < 20 && (mFieldData[i+1][j+1] != MINE)) { //End Bottom position
-                        mFieldData[i+1][j+1] += 1;
+                    if ((i + 1) < 12 && (j + 1) < 20 && (mFieldObjects[i+1][j+1].getSquareImageToShow() != MINE)) { //End Bottom position
+                        mFieldObjects[i+1][j+1].setSquareImageToShow(mFieldObjects[i+1][j+1].getSquareImageToShow() + 1);
                     }
-                    if ((j + 1) < 12&& (mFieldData[i][j+1] != MINE)) { //Bottom position
-                        mFieldData[i][j+1] += 1;
+                    if ((j + 1) < 20&& (mFieldObjects[i][j+1].getSquareImageToShow() != MINE)) { //Bottom position
+                        mFieldObjects[i][j+1].setSquareImageToShow(mFieldObjects[i][j+1].getSquareImageToShow() + 1);
                     }
                 }
             }
         }
     }
 
+    private void unCoverEmptySquares(int xPos, int yPos) {
+        if ((xPos - 1) >= 0 && (yPos - 1) >= 0 && (mFieldObjects[xPos-1][yPos-1].getSquareImageToShow() == EMPTY)) { //Start Top position
+            unCoverSquare(xPos-1, yPos-1);
+            unCoverEmptySquares(xPos-1, yPos-1);
+        }
+        if ((xPos - 1) >= 0 && (mFieldObjects[xPos-1][yPos].getSquareImageToShow() == EMPTY)) { //Start position
+            unCoverSquare(xPos-1, yPos);
+            unCoverEmptySquares(xPos-1, yPos);
+        }
+        if ((xPos - 1) >= 0 && (yPos + 1) < 20 && (mFieldObjects[xPos-1][yPos+1].getSquareImageToShow() == EMPTY)) { //Start Bottom position
+            unCoverSquare(xPos-1, yPos+1);
+            unCoverEmptySquares(xPos-1, yPos+1);
+        }
+        if ((yPos - 1) >= 0 && (mFieldObjects[xPos][yPos-1].getSquareImageToShow() == EMPTY)) { //Top position
+            unCoverSquare(xPos, yPos-1);
+            unCoverEmptySquares(xPos, yPos-1);
+        }
+        if ((xPos + 1) < 12 && (yPos - 1) >= 0 && (mFieldObjects[xPos+1][yPos-1].getSquareImageToShow() == EMPTY)) { //Top End position
+            unCoverSquare(xPos+1, yPos-1);
+            unCoverEmptySquares(xPos+1, yPos-1);
+        }
+        if ((xPos + 1) < 12 && (mFieldObjects[xPos+1][yPos].getSquareImageToShow() == EMPTY)) { //End position
+            unCoverSquare(xPos+1, yPos);
+            unCoverEmptySquares(xPos+1, yPos);
+        }
+        if ((xPos + 1) < 12 && (yPos + 1) < 20 && (mFieldObjects[xPos+1][yPos+1].getSquareImageToShow() == EMPTY)) { //End Bottom position
+            unCoverSquare(xPos+1, yPos+1);
+            unCoverEmptySquares(xPos+1, yPos+1);
+        }
+        if ((yPos + 1) < 20 && (mFieldObjects[xPos][yPos+1].getSquareImageToShow() == EMPTY)) { //Bottom position
+            unCoverSquare(xPos, yPos+1);
+            unCoverEmptySquares(xPos, yPos+1);
+        }
+    }
+
+    private void unCoverSquare(int x, int y) {
+        ((ImageView)mFieldObjects[x][y].getSquareView().
+                findViewById(R.id.image_button)).setImageDrawable(getResources().getDrawable(R.drawable.uncovered));
+    }
+
     private void initMineField() {
+        int resourceId = R.drawable.uncovered;
         mMineFiled.setColumnCount(HORIZONTAL_SIZE);
         mMineFiled.setOrientation(GridLayout.HORIZONTAL);
         for (int j = 0; j < VERTICAL_SIZE ; j++) {
             for (int i = 0; i < HORIZONTAL_SIZE ; i++) {
-                View itemView = getLayoutInflater().inflate(R.layout.square_layout, null);
-                final ImageView imageView = itemView.findViewById(R.id.image_button);
+                View squareView = getLayoutInflater().inflate(R.layout.square_layout, null);
+                final ImageView imageView = squareView.findViewById(R.id.image_button);
                 imageView.setImageDrawable(getResources().getDrawable(R.drawable.covered));
-                mMineFiled.addView(itemView);
+                mFieldObjects[i][j].setSquareView(squareView);
+                mMineFiled.addView(squareView);
 
-                switch (mFieldData[i][j]) {
-                    case MINE : setOnClickListener(itemView, imageView, R.drawable.mine);
+                switch (mFieldObjects[i][j].getSquareImageToShow()) {
+                    case MINE : resourceId = R.drawable.mine;
                         break;
-                    case ONE : setOnClickListener(itemView, imageView, R.drawable.one);
+                    case ONE : resourceId = R.drawable.one;
                         break;
-                    case TWO : setOnClickListener(itemView, imageView, R.drawable.two);
+                    case TWO : resourceId = R.drawable.two;
                         break;
-                    case THREE : setOnClickListener(itemView, imageView, R.drawable.three);
+                    case THREE : resourceId = R.drawable.three;
                         break;
-                    case FOUR : setOnClickListener(itemView, imageView, R.drawable.four);
+                    case FOUR : resourceId = R.drawable.four;
                         break;
-                    case FIVE : setOnClickListener(itemView, imageView, R.drawable.five);
+                    case FIVE : resourceId = R.drawable.five;
                         break;
-                    case SIX : setOnClickListener(itemView, imageView, R.drawable.six);
+                    case SIX : resourceId = R.drawable.six;
                         break;
-                    case SEVEN : setOnClickListener(itemView, imageView, R.drawable.seven);
+                    case SEVEN : resourceId = R.drawable.seven;
                         break;
-                    case EIGHT : setOnClickListener(itemView, imageView, R.drawable.eight);
+                    case EIGHT : resourceId = R.drawable.eight;
                         break;
                     default:
-                        setOnClickListener(itemView, imageView, R.drawable.uncovered);
+                        resourceId = R.drawable.uncovered;
                         break;
                 }
 
-                itemView.setOnLongClickListener(new View.OnLongClickListener() {
-                    @Override
-                    public boolean onLongClick(View v) {
-                        imageView.setImageDrawable(getResources().getDrawable(R.drawable.flaged));
-                        return true;
-                    }
-                });
+                setOnClickListener(i, j, squareView, imageView, resourceId);
+                setOnLongClickListener(squareView, imageView);
             }
         }
     }
 
-    private void setOnClickListener (View itemView, final ImageView imageView, final int resourceId) {
-        itemView.setOnClickListener(new View.OnClickListener() {
+    private void setOnClickListener (final int xPos, final int yPos, final View squareView, final ImageView imageView, final int resourceId) {
+        squareView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                if (resourceId == R.drawable.uncovered) {
+                    //unCoverEmptySquares(xPos, yPos);
+                }
                 imageView.setImageDrawable(getResources().getDrawable(resourceId));
+            }
+        });
+    }
+
+    private void setOnLongClickListener (View itemView, final ImageView imageView) {
+        itemView.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                imageView.setImageDrawable(getResources().getDrawable(R.drawable.flaged));
+                return true;
             }
         });
     }
