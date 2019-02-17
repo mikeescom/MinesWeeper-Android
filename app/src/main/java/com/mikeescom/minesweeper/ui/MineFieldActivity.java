@@ -3,8 +3,10 @@ package com.mikeescom.minesweeper.ui;
 import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.os.CountDownTimer;
 import android.util.Log;
 import android.view.View;
+import android.widget.Chronometer;
 import android.widget.GridLayout;
 import android.widget.ImageView;
 
@@ -14,6 +16,8 @@ import com.mikeescom.minesweeper.data.FieldObject;
 import com.mikeescom.minesweeper.utilities.Constants;
 
 import java.util.Random;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class MineFieldActivity extends AppCompatActivity {
 
@@ -34,6 +38,8 @@ public class MineFieldActivity extends AppCompatActivity {
 
     private GridLayout mMineFiled;
 
+    private CountDownTimer mCountDownTimer;
+    private boolean mTimerStarted;
     private int mNumberOfMines;
     private FieldObject[][] mFieldObjects = new FieldObject[HORIZONTAL_SIZE][VERTICAL_SIZE];
 
@@ -215,6 +221,9 @@ public class MineFieldActivity extends AppCompatActivity {
                     unCoverEmptySquares(xPos, yPos);
                 }
                 imageView.setImageDrawable(getResources().getDrawable(resourceId));
+                if (!mTimerStarted) {
+                    startTimer();
+                }
             }
         });
     }
@@ -231,6 +240,47 @@ public class MineFieldActivity extends AppCompatActivity {
                 return true;
             }
         });
+    }
+
+    private void startTimer() {
+        mTimerStarted = true;
+        final ImageView tensMinutesImageView = findViewById(R.id.tens_minutes);
+        final ImageView unitsMinutesImageView = findViewById(R.id.units_minutes);
+        final ImageView tensSecondsImageView = findViewById(R.id.tens_seconds);
+        final ImageView unitsSecondsImageView = findViewById(R.id.units_seconds);
+
+        new CountDownTimer(3600000, 1000) {
+
+            public void onTick(long millisUntilFinished) {
+                Log.i(TAG, "millisUntilFinished: " + millisUntilFinished);
+                Log.i(TAG, "millisSinceStarted: " + (3600000 - millisUntilFinished));
+                int seconds = 0;
+                int minutes = 0;
+                int chronometerTime = (int)((3600000 - millisUntilFinished) / 1000);
+                Log.i(TAG, "Time: " + chronometerTime );
+                minutes = chronometerTime / 60;
+                seconds = chronometerTime - (minutes * 60);
+                if ((chronometerTime % 60) != 0) {
+                    int units = seconds % 10;
+                    seconds = seconds / 10;
+                    int tens = seconds % 10;
+                    setImageNumber(unitsSecondsImageView, units);
+                    setImageNumber(tensSecondsImageView, tens);
+                } else {
+                    int units = minutes % 10;
+                    minutes = minutes / 10;
+                    int tens = minutes % 10;
+                    setImageNumber(unitsMinutesImageView, units);
+                    setImageNumber(tensMinutesImageView, tens);
+                    setImageNumber(unitsSecondsImageView, 0);
+                    setImageNumber(tensSecondsImageView, 0);
+                }
+            }
+
+            public void onFinish() {
+
+            }
+        }.start();
     }
 
     private void updateCounter(int number) {

@@ -5,12 +5,12 @@
     android:layout_height="wrap_content"
     android:background="@color/digital_color_bg">
     <ImageView
-        android:id="@+id/timer_thousands"
+        android:id="@+id/tens_minutes"
         android:layout_width="40dp"
         android:layout_height="59dp"
         android:src="@drawable/zero_digit"/>
     <ImageView
-        android:id="@+id/timer_hundreds"
+        android:id="@+id/units_minutes"
         android:layout_width="40dp"
         android:layout_height="59dp"
         android:src="@drawable/zero_digit"/>
@@ -20,12 +20,12 @@
         android:layout_height="59dp"
         android:src="@drawable/zero_digit"/>
     <ImageView
-        android:id="@+id/timer_tens"
+        android:id="@+id/tens_seconds"
         android:layout_width="40dp"
         android:layout_height="59dp"
         android:src="@drawable/zero_digit" />
     <ImageView
-        android:id="@+id/timer_units"
+        android:id="@+id/units_seconds"
         android:layout_width="40dp"
         android:layout_height="59dp"
         android:src="@drawable/zero_digit" />
