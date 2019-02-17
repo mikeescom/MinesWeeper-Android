@@ -1,18 +1,12 @@
 package com.mikeescom.minesweeper.ui;
 
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.util.DisplayMetrics;
 import android.util.Log;
-import android.util.TypedValue;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.Chronometer;
 import android.widget.GridLayout;
 import android.widget.ImageView;
-import android.widget.TextView;
 
 import com.mikeescom.minesweeper.R;
 import com.mikeescom.minesweeper.data.Coordinates;
@@ -39,8 +33,7 @@ public class MineFieldActivity extends AppCompatActivity {
     private static final int EIGHT = 8;
 
     private GridLayout mMineFiled;
-    private Chronometer mChronometer;
-    private TextView mMinesCounter;
+
     private int mNumberOfMines;
     private FieldObject[][] mFieldObjects = new FieldObject[HORIZONTAL_SIZE][VERTICAL_SIZE];
 
@@ -61,9 +54,7 @@ public class MineFieldActivity extends AppCompatActivity {
 
     private void initView() {
         mMineFiled = findViewById(R.id.mine_field);
-        mChronometer = findViewById(R.id.chronometer);
-        mMinesCounter = findViewById(R.id.mines_counter);
-        mMinesCounter.setText(mNumberOfMines + "");
+        updateCounter(mNumberOfMines);
     }
 
     private void initFieldObjectsArray() {
@@ -220,7 +211,6 @@ public class MineFieldActivity extends AppCompatActivity {
         squareView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                startChronometer();
                 if (resourceId == R.drawable.uncovered) {
                     unCoverEmptySquares(xPos, yPos);
                 }
@@ -233,24 +223,44 @@ public class MineFieldActivity extends AppCompatActivity {
         itemView.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
-                startChronometer();
                 mNumberOfMines--;
                 if (mNumberOfMines >= 0) {
-                    mMinesCounter.setText(mNumberOfMines + "");
                     imageView.setImageDrawable(getResources().getDrawable(R.drawable.flaged));
+                    updateCounter(mNumberOfMines);
                 }
                 return true;
             }
         });
     }
 
-    public void startChronometer() {
-        if (!mChronometer.isActivated())
-            mChronometer.start();
+    private void updateCounter(int number) {
+        ImageView hundredsImageView = findViewById(R.id.counter_hundreds);
+        ImageView tensImageView = findViewById(R.id.counter_tens);
+        ImageView unitsImageView = findViewById(R.id.counter_units);
+
+        int units = number % 10;
+        number = number / 10;
+        int tens = number % 10;
+        number = number / 10;
+        int hundreds = number % 10;
+
+        setImageNumber(unitsImageView, units);
+        setImageNumber(tensImageView, tens);
+        setImageNumber(hundredsImageView, hundreds);
     }
 
-    public void stopChronometer() {
-        if (mChronometer.isActivated())
-            mChronometer.stop();
+    private void setImageNumber(ImageView imageView, int digit) {
+        switch (digit) {
+            case 0: imageView.setImageDrawable(getResources().getDrawable(R.drawable.zero_digit)); break;
+            case 1: imageView.setImageDrawable(getResources().getDrawable(R.drawable.one_digit)); break;
+            case 2: imageView.setImageDrawable(getResources().getDrawable(R.drawable.two_digit)); break;
+            case 3: imageView.setImageDrawable(getResources().getDrawable(R.drawable.three_digit)); break;
+            case 4: imageView.setImageDrawable(getResources().getDrawable(R.drawable.four_digit)); break;
+            case 5: imageView.setImageDrawable(getResources().getDrawable(R.drawable.five_digit)); break;
+            case 6: imageView.setImageDrawable(getResources().getDrawable(R.drawable.six_digit)); break;
+            case 7: imageView.setImageDrawable(getResources().getDrawable(R.drawable.seven_digit)); break;
+            case 8: imageView.setImageDrawable(getResources().getDrawable(R.drawable.eight_digit)); break;
+            case 9: imageView.setImageDrawable(getResources().getDrawable(R.drawable.nine_digit)); break;
+        }
     }
 }

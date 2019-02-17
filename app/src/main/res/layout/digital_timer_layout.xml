@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:background="@color/digital_color_bg">
+    <ImageView
+        android:id="@+id/timer_thousands"
+        android:layout_width="40dp"
+        android:layout_height="59dp"
+        android:src="@drawable/zero_digit"/>
+    <ImageView
+        android:id="@+id/timer_hundreds"
+        android:layout_width="40dp"
+        android:layout_height="59dp"
+        android:src="@drawable/zero_digit"/>
+    <ImageView
+        android:id="@+id/clock_divider"
+        android:layout_width="5dp"
+        android:layout_height="59dp"
+        android:src="@drawable/zero_digit"/>
+    <ImageView
+        android:id="@+id/timer_tens"
+        android:layout_width="40dp"
+        android:layout_height="59dp"
+        android:src="@drawable/zero_digit" />
+    <ImageView
+        android:id="@+id/timer_units"
+        android:layout_width="40dp"
+        android:layout_height="59dp"
+        android:src="@drawable/zero_digit" />
+</LinearLayout>
