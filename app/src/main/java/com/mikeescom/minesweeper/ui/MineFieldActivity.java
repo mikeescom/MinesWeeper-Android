@@ -21,6 +21,7 @@ public class MineFieldActivity extends AppCompatActivity {
 
     private static final String TAG = "MineFieldActivity";
 
+    private static final int DEFAULT_NUMBER_MINES = 36;
     private static final int HORIZONTAL_SIZE = 12;
     private static final int VERTICAL_SIZE = 20;
     private static final int EMPTY = 0;
@@ -61,7 +62,7 @@ public class MineFieldActivity extends AppCompatActivity {
     }
 
     private void initData() {
-        mNumberOfMines = getIntent().getIntExtra(Constants.INTENT_SIZE_OF_FIELD, 10);
+        mNumberOfMines = DEFAULT_NUMBER_MINES;
     }
 
     private void initView() {
