@@ -21,7 +21,7 @@ public class MineFieldActivity extends AppCompatActivity {
 
     private static final String TAG = "MineFieldActivity";
 
-    private static final int DEFAULT_NUMBER_MINES = 36;
+    private static final int DEFAULT_NUMBER_MINES = 25;
     private static final int HORIZONTAL_SIZE = 12;
     private static final int VERTICAL_SIZE = 20;
     private static final int EMPTY = 0;
@@ -112,22 +112,22 @@ public class MineFieldActivity extends AppCompatActivity {
                     if ((i - 1) >= 0 && (mFieldObjects[i-1][j].getSquareImageToShow() != MINE)) { //Start position
                         mFieldObjects[i-1][j].setSquareImageToShow(mFieldObjects[i-1][j].getSquareImageToShow() + 1);
                     }
-                    if ((i - 1) >= 0 && (j + 1) < 20 && (mFieldObjects[i-1][j+1].getSquareImageToShow() != MINE)) { //Start Bottom position
+                    if ((i - 1) >= 0 && (j + 1) < VERTICAL_SIZE && (mFieldObjects[i-1][j+1].getSquareImageToShow() != MINE)) { //Start Bottom position
                         mFieldObjects[i-1][j+1].setSquareImageToShow(mFieldObjects[i-1][j+1].getSquareImageToShow() + 1);
                     }
                     if ((j - 1) >= 0 && (mFieldObjects[i][j-1].getSquareImageToShow() != MINE)) { //Top position
                         mFieldObjects[i][j-1].setSquareImageToShow(mFieldObjects[i][j-1].getSquareImageToShow() + 1);
                     }
-                    if ((i + 1) < 12 && (j - 1) >= 0 && (mFieldObjects[i+1][j-1].getSquareImageToShow() != MINE)) { //Top End position
+                    if ((i + 1) < HORIZONTAL_SIZE && (j - 1) >= 0 && (mFieldObjects[i+1][j-1].getSquareImageToShow() != MINE)) { //Top End position
                         mFieldObjects[i+1][j-1].setSquareImageToShow(mFieldObjects[i+1][j-1].getSquareImageToShow() + 1);
                     }
-                    if ((i + 1) < 12 && (mFieldObjects[i+1][j].getSquareImageToShow() != MINE)) { //End position
+                    if ((i + 1) < HORIZONTAL_SIZE && (mFieldObjects[i+1][j].getSquareImageToShow() != MINE)) { //End position
                         mFieldObjects[i+1][j].setSquareImageToShow(mFieldObjects[i+1][j].getSquareImageToShow() + 1);
                     }
-                    if ((i + 1) < 12 && (j + 1) < 20 && (mFieldObjects[i+1][j+1].getSquareImageToShow() != MINE)) { //End Bottom position
+                    if ((i + 1) < HORIZONTAL_SIZE && (j + 1) < VERTICAL_SIZE && (mFieldObjects[i+1][j+1].getSquareImageToShow() != MINE)) { //End Bottom position
                         mFieldObjects[i+1][j+1].setSquareImageToShow(mFieldObjects[i+1][j+1].getSquareImageToShow() + 1);
                     }
-                    if ((j + 1) < 20&& (mFieldObjects[i][j+1].getSquareImageToShow() != MINE)) { //Bottom position
+                    if ((j + 1) < VERTICAL_SIZE && (mFieldObjects[i][j+1].getSquareImageToShow() != MINE)) { //Bottom position
                         mFieldObjects[i][j+1].setSquareImageToShow(mFieldObjects[i][j+1].getSquareImageToShow() + 1);
                     }
                 }
@@ -137,46 +137,67 @@ public class MineFieldActivity extends AppCompatActivity {
 
     private void unCoverEmptySquares(int xPos, int yPos) {
         if ((xPos - 1) >= 0 && (yPos - 1) >= 0 &&
-                (mFieldObjects[xPos-1][yPos-1].getSquareImageToShow() != MINE) &&
+                (isEmptySquare(mFieldObjects[xPos-1][yPos-1].getSquareImageToShow())) &&
                 mFieldObjects[xPos-1][yPos-1].isCovered()) { //Start Top position
             unCoverSquare(xPos-1, yPos-1);
+            unCoverEmptySquares(xPos-1, yPos-1);
         }
         if ((xPos - 1) >= 0 &&
-                (mFieldObjects[xPos-1][yPos].getSquareImageToShow() != MINE) &&
+                (isEmptySquare(mFieldObjects[xPos-1][yPos].getSquareImageToShow())) &&
                 mFieldObjects[xPos-1][yPos].isCovered()) { //Start position
             unCoverSquare(xPos-1, yPos);
             unCoverEmptySquares(xPos-1, yPos);
         }
-        if ((xPos - 1) >= 0 && (yPos + 1) < 20 &&
-                (mFieldObjects[xPos-1][yPos+1].getSquareImageToShow() != MINE) &&
+        if ((xPos - 1) >= 0 && (yPos + 1) < VERTICAL_SIZE &&
+                (isEmptySquare(mFieldObjects[xPos-1][yPos+1].getSquareImageToShow())) &&
                 mFieldObjects[xPos-1][yPos+1].isCovered()) { //Start Bottom position
             unCoverSquare(xPos-1, yPos+1);
+            unCoverEmptySquares(xPos-1, yPos+1);
         }
         if ((yPos - 1) >= 0 &&
-                (mFieldObjects[xPos][yPos-1].getSquareImageToShow() != MINE) &&
+                (isEmptySquare(mFieldObjects[xPos][yPos-1].getSquareImageToShow())) &&
                 mFieldObjects[xPos][yPos-1].isCovered()) { //Top position
             unCoverSquare(xPos, yPos-1);
             unCoverEmptySquares(xPos, yPos-1);
         }
-        if ((xPos + 1) < 12 && (yPos - 1) >= 0 &&
-                (mFieldObjects[xPos+1][yPos-1].getSquareImageToShow() != MINE) &&
+        if ((xPos + 1) < HORIZONTAL_SIZE && (yPos - 1) >= 0 &&
+                (isEmptySquare(mFieldObjects[xPos+1][yPos-1].getSquareImageToShow())) &&
                 mFieldObjects[xPos+1][yPos-1].isCovered()) { //Top End position
             unCoverSquare(xPos+1, yPos-1);
+            unCoverEmptySquares(xPos+1, yPos-1);
         }
-        if ((xPos + 1) < 12 &&
-                (mFieldObjects[xPos+1][yPos].getSquareImageToShow() != MINE) &&
+        if ((xPos + 1) < HORIZONTAL_SIZE &&
+                (isEmptySquare(mFieldObjects[xPos+1][yPos].getSquareImageToShow())) &&
                 mFieldObjects[xPos+1][yPos].isCovered()) { //End position
             unCoverSquare(xPos+1, yPos);
+            unCoverEmptySquares(xPos+1, yPos);
         }
-        if ((xPos + 1) < 12 && (yPos + 1) < 20 &&
-                (mFieldObjects[xPos+1][yPos+1].getSquareImageToShow() != MINE) &&
+        if ((xPos + 1) < HORIZONTAL_SIZE && (yPos + 1) < VERTICAL_SIZE &&
+                (isEmptySquare(mFieldObjects[xPos+1][yPos+1].getSquareImageToShow())) &&
                 mFieldObjects[xPos+1][yPos+1].isCovered()) { //End Bottom position
             unCoverSquare(xPos+1, yPos+1);
+            unCoverEmptySquares(xPos+1, yPos+1);
         }
-        if ((yPos + 1) < 20 &&
-                (mFieldObjects[xPos][yPos+1].getSquareImageToShow() != MINE) &&
+        if ((yPos + 1) < VERTICAL_SIZE &&
+                (isEmptySquare(mFieldObjects[xPos][yPos+1].getSquareImageToShow())) &&
                 mFieldObjects[xPos][yPos+1].isCovered()) { //Bottom position
             unCoverSquare(xPos, yPos+1);
+            unCoverEmptySquares(xPos, yPos+1);
+        }
+    }
+
+    private boolean isEmptySquare(int imageToShow) {
+        switch (imageToShow) {
+            case MINE: return false;
+            case ONE: return false;
+            case TWO: return false;
+            case THREE: return false;
+            case FOUR: return false;
+            case FIVE: return false;
+            case SIX: return false;
+            case SEVEN: return false;
+            case EIGHT: return false;
+            default: return true;
         }
     }
 
