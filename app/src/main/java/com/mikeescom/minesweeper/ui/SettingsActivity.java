@@ -17,9 +17,9 @@ import android.widget.Toast;
 
 public class SettingsActivity extends AppCompatActivity {
 
-    private TextView mSizeOfFieldtitle;
-    private EditText mSizeOfText;
-    private Button mPlay;
+    private TextView mNumberMinesTitle;
+    private EditText mNumberMines;
+    private Button mUpdate;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,16 +31,16 @@ public class SettingsActivity extends AppCompatActivity {
 
 
     private void initViews() {
-        mSizeOfFieldtitle = findViewById(R.id.tv_size_of_field_title);
-        mSizeOfText = findViewById(R.id.et_size_of_field);
-        mPlay = findViewById(R.id.bt_play);
+        mNumberMinesTitle = findViewById(R.id.number_mines_title);
+        mNumberMines = findViewById(R.id.number_mines);
+        mUpdate = findViewById(R.id.update_button);
     }
 
     private void initListeners() {
-        mPlay.setOnClickListener(new View.OnClickListener() {
+        mUpdate.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String sizeOfField = mSizeOfText.getText().toString();
+                String sizeOfField = mNumberMines.getText().toString();
                 if (TextUtils.isEmpty(sizeOfField) ||
                         (Integer.parseInt(sizeOfField) <= 0) ||
                         (Integer.parseInt(sizeOfField) >=200)) {

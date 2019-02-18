@@ -1,5 +1,6 @@
 package com.mikeescom.minesweeper.ui;
 
+import android.content.Intent;
 import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -44,6 +45,7 @@ public class MineFieldActivity extends AppCompatActivity {
 
     private GridLayout mMineFiled;
     private ImageView mFace;
+    private ImageView mSettings;
 
     private boolean mTimerStarted;
     private int mNumberOfMines;
@@ -67,6 +69,14 @@ public class MineFieldActivity extends AppCompatActivity {
     private void initView() {
         mMineFiled = findViewById(R.id.mine_field);
         mFace = findViewById(R.id.face);
+        mSettings = findViewById(R.id.settings);
+        mSettings.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(MineFieldActivity.this, SettingsActivity.class);
+                startActivity(intent);
+            }
+        });
         updateCounter(mNumberOfMines);
     }
 
