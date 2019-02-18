@@ -13,7 +13,6 @@ import android.widget.ImageView;
 import com.mikeescom.minesweeper.R;
 import com.mikeescom.minesweeper.data.Coordinates;
 import com.mikeescom.minesweeper.data.FieldObject;
-import com.mikeescom.minesweeper.utilities.Constants;
 
 import java.util.Random;
 
