@@ -15,7 +15,7 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-public class MainActivity extends AppCompatActivity {
+public class SettingsActivity extends AppCompatActivity {
 
     private TextView mSizeOfFieldtitle;
     private EditText mSizeOfText;
@@ -24,7 +24,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_settings);
         initViews();
         initListeners();
     }
@@ -44,10 +44,10 @@ public class MainActivity extends AppCompatActivity {
                 if (TextUtils.isEmpty(sizeOfField) ||
                         (Integer.parseInt(sizeOfField) <= 0) ||
                         (Integer.parseInt(sizeOfField) >=200)) {
-                    Toast.makeText(MainActivity.this,
+                    Toast.makeText(SettingsActivity.this,
                             "You should add a number grater than zero and less than 200", Toast.LENGTH_LONG).show();
                 } else {
-                    Intent intent = new Intent(MainActivity.this, MineFieldActivity.class);
+                    Intent intent = new Intent(SettingsActivity.this, MineFieldActivity.class);
                     intent.putExtra(Constants.INTENT_SIZE_OF_FIELD, Integer.parseInt(sizeOfField));
                     startActivity(intent);
                 }

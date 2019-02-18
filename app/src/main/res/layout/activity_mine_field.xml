@@ -1,27 +1,114 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
+    android:background="@color/digital_color_bg"
     tools:context=".ui.MineFieldActivity">
 
-    <RelativeLayout
+    <LinearLayout
         android:id="@+id/information_layout"
         android:layout_width="match_parent"
-        android:layout_height="59dp"
-        android:orientation="horizontal">
-        <include android:id="@+id/digital_counter"
-            android:layout_width="wrap_content"
-            android:layout_height="59dp"
-            android:layout_alignParentStart="true"
-            layout="@layout/digital_counter_layout" />
-        <include android:id="@+id/digital_timer"
-            android:layout_width="wrap_content"
-            android:layout_height="59dp"
-            android:layout_alignParentEnd="true"
-            layout="@layout/digital_timer_layout"/>
-    </RelativeLayout>
+        android:layout_height="60dp"
+        android:gravity="center"
+        android:orientation="horizontal"
+        android:padding="6dp"
+        android:background="@color/digital_color_bg">
+        <!--COUNTER-->
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1.2"
+            android:background="@color/digital_color_bg">
+            <ImageView
+                android:id="@+id/counter_hundreds"
+                android:layout_width="30dp"
+                android:layout_height="49dp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                android:src="@drawable/zero_digit"/>
+            <ImageView
+                android:id="@+id/counter_tens"
+                android:layout_width="30dp"
+                android:layout_height="49dp"
+                app:layout_constraintStart_toEndOf="@+id/counter_hundreds"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                android:src="@drawable/zero_digit" />
+            <ImageView
+                android:id="@+id/counter_units"
+                android:layout_width="30dp"
+                android:layout_height="49dp"
+                app:layout_constraintStart_toEndOf="@+id/counter_tens"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                android:src="@drawable/zero_digit" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
+        <ImageView
+            android:id="@+id/settings"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:src="@drawable/settings"/>
+        <ImageView
+            android:id="@+id/face"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:src="@drawable/smile"/>
+        <!--TIMER-->
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1.8"
+            android:background="@color/digital_color_bg">
+            <ImageView
+                android:id="@+id/tens_minutes"
+                android:layout_width="30dp"
+                android:layout_height="49dp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                android:src="@drawable/zero_digit"/>
+            <ImageView
+                android:id="@+id/units_minutes"
+                android:layout_width="30dp"
+                android:layout_height="49dp"
+                app:layout_constraintStart_toEndOf="@+id/tens_minutes"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                android:src="@drawable/zero_digit"/>
+            <ImageView
+                android:id="@+id/clock_divider"
+                android:layout_width="5dp"
+                android:layout_height="49dp"
+                app:layout_constraintStart_toEndOf="@+id/units_minutes"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                android:src="@drawable/zero_digit"/>
+            <ImageView
+                android:id="@+id/tens_seconds"
+                android:layout_width="30dp"
+                android:layout_height="49dp"
+                app:layout_constraintStart_toEndOf="@+id/clock_divider"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                android:src="@drawable/zero_digit" />
+            <ImageView
+                android:id="@+id/units_seconds"
+                android:layout_width="30dp"
+                android:layout_height="49dp"
+                app:layout_constraintStart_toEndOf="@+id/tens_seconds"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                android:src="@drawable/zero_digit" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </LinearLayout>
 
     <GridLayout
         android:id="@+id/mine_field"

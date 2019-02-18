@@ -4,9 +4,9 @@ import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.CountDownTimer;
+import android.os.Handler;
 import android.util.Log;
 import android.view.View;
-import android.widget.Chronometer;
 import android.widget.GridLayout;
 import android.widget.ImageView;
 
@@ -16,8 +16,6 @@ import com.mikeescom.minesweeper.data.FieldObject;
 import com.mikeescom.minesweeper.utilities.Constants;
 
 import java.util.Random;
-import java.util.Timer;
-import java.util.TimerTask;
 
 public class MineFieldActivity extends AppCompatActivity {
 
@@ -36,9 +34,17 @@ public class MineFieldActivity extends AppCompatActivity {
     private static final int SEVEN = 7;
     private static final int EIGHT = 8;
 
-    private GridLayout mMineFiled;
+    private enum FaceType {
+        ANGRY,
+        HAPPY,
+        KILLED,
+        SCARED,
+        SMILE
+    }
 
-    private CountDownTimer mCountDownTimer;
+    private GridLayout mMineFiled;
+    private ImageView mFace;
+
     private boolean mTimerStarted;
     private int mNumberOfMines;
     private FieldObject[][] mFieldObjects = new FieldObject[HORIZONTAL_SIZE][VERTICAL_SIZE];
@@ -60,6 +66,7 @@ public class MineFieldActivity extends AppCompatActivity {
 
     private void initView() {
         mMineFiled = findViewById(R.id.mine_field);
+        mFace = findViewById(R.id.face);
         updateCounter(mNumberOfMines);
     }
 
@@ -217,6 +224,7 @@ public class MineFieldActivity extends AppCompatActivity {
         squareView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                setFaceImage(FaceType.SCARED, true);
                 if (resourceId == R.drawable.uncovered) {
                     unCoverEmptySquares(xPos, yPos);
                 }
@@ -232,6 +240,7 @@ public class MineFieldActivity extends AppCompatActivity {
         itemView.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
+                setFaceImage(FaceType.SCARED, true);
                 mNumberOfMines--;
                 if (mNumberOfMines >= 0) {
                     imageView.setImageDrawable(getResources().getDrawable(R.drawable.flaged));
@@ -311,6 +320,27 @@ public class MineFieldActivity extends AppCompatActivity {
             case 7: imageView.setImageDrawable(getResources().getDrawable(R.drawable.seven_digit)); break;
             case 8: imageView.setImageDrawable(getResources().getDrawable(R.drawable.eight_digit)); break;
             case 9: imageView.setImageDrawable(getResources().getDrawable(R.drawable.nine_digit)); break;
+        }
+    }
+
+    private void setFaceImage(FaceType faceType, boolean keepSmiling) {
+        int resource = 0;
+        switch (faceType) {
+            case ANGRY: resource = R.drawable.angry; break;
+            case HAPPY: resource = R.drawable.happy; break;
+            case KILLED: resource = R.drawable.killed; break;
+            case SCARED: resource = R.drawable.scared; break;
+            case SMILE: resource = R.drawable.smile; break;
+        }
+        mFace.setImageDrawable(getResources().getDrawable(resource));
+        if(keepSmiling) {
+            final Handler handler = new Handler();
+            handler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    mFace.setImageDrawable(getResources().getDrawable(R.drawable.smile));
+                }
+            }, 500);
         }
     }
 }
