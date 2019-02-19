@@ -20,7 +20,7 @@ public class MineFieldActivity extends AppCompatActivity {
 
     private static final String TAG = "MineFieldActivity";
 
-    private static final int DEFAULT_NUMBER_MINES = 25;
+    private static final int DEFAULT_NUMBER_MINES = 20;
     private static final int HORIZONTAL_SIZE = 12;
     private static final int VERTICAL_SIZE = 20;
     private static final int EMPTY = 0;
@@ -49,6 +49,7 @@ public class MineFieldActivity extends AppCompatActivity {
     private CountDownTimer mCountDownTimer;
     private boolean mTimerStarted;
     private int mNumberOfMines;
+    private int mMinesFound = 0;
     private FieldObject[][] mFieldObjects = new FieldObject[HORIZONTAL_SIZE][VERTICAL_SIZE];
 
     @Override
@@ -299,6 +300,14 @@ public class MineFieldActivity extends AppCompatActivity {
                     setFaceImage(FaceType.SCARED, true);
                     mNumberOfMines--;
                     if (mNumberOfMines >= 0) {
+                        if (fieldObject.getSquareImageToShow() == MINE) {
+                            mMinesFound++;
+                        }
+                        if (mMinesFound == DEFAULT_NUMBER_MINES) {
+                            Log.i(TAG, "You won!" + mMinesFound);
+                            setFaceImage(FaceType.HAPPY, false);
+                        }
+                        Log.i(TAG, "Mine flagged:" + mMinesFound);
                         imageView.setImageDrawable(getResources().getDrawable(R.drawable.flaged));
                         updateCounter(mNumberOfMines);
                     }
