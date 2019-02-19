@@ -4,13 +4,11 @@ import android.view.View;
 
 public class FieldObject {
     private View squareView;
-    private Coordinates coordinates;
     private int squareImageToShow = 0;
     private boolean covered = true;
 
-    public FieldObject (View squareView, Coordinates coordinates, int squareImageToShow) {
+    public FieldObject (View squareView, int squareImageToShow) {
         this.squareView = squareView;
-        this.coordinates = coordinates;
         this.squareImageToShow = squareImageToShow;
     }
 
@@ -20,14 +18,6 @@ public class FieldObject {
 
     public void setSquareView(View squareView) {
         this.squareView = squareView;
-    }
-
-    public Coordinates getCoordinates() {
-        return coordinates;
-    }
-
-    public void setCoordinates(Coordinates coordinates) {
-        this.coordinates = coordinates;
     }
 
     public int getSquareImageToShow() {

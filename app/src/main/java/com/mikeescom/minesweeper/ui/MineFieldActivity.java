@@ -12,7 +12,6 @@ import android.widget.GridLayout;
 import android.widget.ImageView;
 
 import com.mikeescom.minesweeper.R;
-import com.mikeescom.minesweeper.data.Coordinates;
 import com.mikeescom.minesweeper.data.FieldObject;
 
 import java.util.Random;
@@ -90,7 +89,7 @@ public class MineFieldActivity extends AppCompatActivity {
     private void initFieldObjectsArray() {
         for (int j = 0; j < VERTICAL_SIZE ; j++) {
             for (int i = 0; i < HORIZONTAL_SIZE ; i++) {
-                mFieldObjects[i][j] = new FieldObject(null, new Coordinates(i, j), EMPTY);
+                mFieldObjects[i][j] = new FieldObject(null, EMPTY);
             }
         }
     }
@@ -100,11 +99,15 @@ public class MineFieldActivity extends AppCompatActivity {
         int xMinePos;
         int yMinePos;
 
-        for (int i = 0 ; i < mNumberOfMines ; i++) {
+        int i = 0;
+        while (i < mNumberOfMines) {
             xMinePos = rand.nextInt(HORIZONTAL_SIZE);
             yMinePos = rand.nextInt(VERTICAL_SIZE);
-            mFieldObjects[xMinePos][yMinePos] = new FieldObject(null, new Coordinates(xMinePos, yMinePos), MINE);
-            Log.d(TAG, "Mine set up at: [" + xMinePos + ", " + yMinePos + "]");
+            if (mFieldObjects[xMinePos][yMinePos].getSquareImageToShow() != MINE) {
+                mFieldObjects[xMinePos][yMinePos] = new FieldObject(null, MINE);
+                i++;
+                Log.d(TAG, "Mine set up at: [" + xMinePos + ", " + yMinePos + "]");
+            }
         }
         setUpFieldNumbers();
     }
