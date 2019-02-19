@@ -47,6 +47,7 @@ public class MineFieldActivity extends AppCompatActivity {
     private ImageView mFace;
     private ImageView mSettings;
 
+    private CountDownTimer mCountDownTimer;
     private boolean mTimerStarted;
     private int mNumberOfMines;
     private FieldObject[][] mFieldObjects = new FieldObject[HORIZONTAL_SIZE][VERTICAL_SIZE];
@@ -69,6 +70,12 @@ public class MineFieldActivity extends AppCompatActivity {
     private void initView() {
         mMineFiled = findViewById(R.id.mine_field);
         mFace = findViewById(R.id.face);
+        mFace.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                recreate();
+            }
+        });
         mSettings = findViewById(R.id.settings);
         mSettings.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -136,70 +143,79 @@ public class MineFieldActivity extends AppCompatActivity {
     }
 
     private void unCoverEmptySquares(int xPos, int yPos) {
-        if ((xPos - 1) >= 0 && (yPos - 1) >= 0 &&
-                (isEmptySquare(mFieldObjects[xPos-1][yPos-1].getSquareImageToShow())) &&
+        if ((xPos - 1) >= 0 && (yPos - 1) >= 0 && mFieldObjects[xPos-1][yPos-1].getSquareImageToShow() != MINE &&
                 mFieldObjects[xPos-1][yPos-1].isCovered()) { //Start Top position
-            unCoverSquare(xPos-1, yPos-1);
-            unCoverEmptySquares(xPos-1, yPos-1);
+                unCoverSquare(xPos - 1, yPos - 1);
+            if (!isNumberOrMineSquare(mFieldObjects[xPos-1][yPos-1].getSquareImageToShow())) {
+                unCoverEmptySquares(xPos - 1, yPos - 1);
+            }
         }
-        if ((xPos - 1) >= 0 &&
-                (isEmptySquare(mFieldObjects[xPos-1][yPos].getSquareImageToShow())) &&
+        if ((xPos - 1) >= 0 && mFieldObjects[xPos-1][yPos].getSquareImageToShow() != MINE &&
                 mFieldObjects[xPos-1][yPos].isCovered()) { //Start position
             unCoverSquare(xPos-1, yPos);
-            unCoverEmptySquares(xPos-1, yPos);
+            if (!isNumberOrMineSquare(mFieldObjects[xPos-1][yPos].getSquareImageToShow())) {
+                unCoverEmptySquares(xPos - 1, yPos);
+            }
         }
-        if ((xPos - 1) >= 0 && (yPos + 1) < VERTICAL_SIZE &&
-                (isEmptySquare(mFieldObjects[xPos-1][yPos+1].getSquareImageToShow())) &&
+        if ((xPos - 1) >= 0 && (yPos + 1) < VERTICAL_SIZE && mFieldObjects[xPos-1][yPos+1].getSquareImageToShow() != MINE &&
                 mFieldObjects[xPos-1][yPos+1].isCovered()) { //Start Bottom position
             unCoverSquare(xPos-1, yPos+1);
-            unCoverEmptySquares(xPos-1, yPos+1);
+            if (!isNumberOrMineSquare(mFieldObjects[xPos-1][yPos+1].getSquareImageToShow())) {
+                unCoverEmptySquares(xPos - 1, yPos + 1);
+            }
         }
-        if ((yPos - 1) >= 0 &&
-                (isEmptySquare(mFieldObjects[xPos][yPos-1].getSquareImageToShow())) &&
+        if ((yPos - 1) >= 0 && mFieldObjects[xPos][yPos-1].getSquareImageToShow() != MINE &&
                 mFieldObjects[xPos][yPos-1].isCovered()) { //Top position
             unCoverSquare(xPos, yPos-1);
-            unCoverEmptySquares(xPos, yPos-1);
+            if (!isNumberOrMineSquare(mFieldObjects[xPos][yPos-1].getSquareImageToShow())) {
+                unCoverEmptySquares(xPos, yPos - 1);
+            }
         }
-        if ((xPos + 1) < HORIZONTAL_SIZE && (yPos - 1) >= 0 &&
-                (isEmptySquare(mFieldObjects[xPos+1][yPos-1].getSquareImageToShow())) &&
+        if ((xPos + 1) < HORIZONTAL_SIZE && (yPos - 1) >= 0 && mFieldObjects[xPos+1][yPos-1].getSquareImageToShow() != MINE &&
                 mFieldObjects[xPos+1][yPos-1].isCovered()) { //Top End position
             unCoverSquare(xPos+1, yPos-1);
-            unCoverEmptySquares(xPos+1, yPos-1);
+            if (!isNumberOrMineSquare(mFieldObjects[xPos+1][yPos-1].getSquareImageToShow())) {
+                unCoverEmptySquares(xPos + 1, yPos - 1);
+            }
         }
-        if ((xPos + 1) < HORIZONTAL_SIZE &&
-                (isEmptySquare(mFieldObjects[xPos+1][yPos].getSquareImageToShow())) &&
+        if ((xPos + 1) < HORIZONTAL_SIZE && mFieldObjects[xPos+1][yPos].getSquareImageToShow() != MINE &&
                 mFieldObjects[xPos+1][yPos].isCovered()) { //End position
             unCoverSquare(xPos+1, yPos);
-            unCoverEmptySquares(xPos+1, yPos);
+            if (!isNumberOrMineSquare(mFieldObjects[xPos+1][yPos].getSquareImageToShow())) {
+                unCoverEmptySquares(xPos + 1, yPos);
+            }
         }
-        if ((xPos + 1) < HORIZONTAL_SIZE && (yPos + 1) < VERTICAL_SIZE &&
-                (isEmptySquare(mFieldObjects[xPos+1][yPos+1].getSquareImageToShow())) &&
+        if ((xPos + 1) < HORIZONTAL_SIZE && (yPos + 1) < VERTICAL_SIZE && mFieldObjects[xPos+1][yPos+1].getSquareImageToShow() != MINE &&
                 mFieldObjects[xPos+1][yPos+1].isCovered()) { //End Bottom position
             unCoverSquare(xPos+1, yPos+1);
-            unCoverEmptySquares(xPos+1, yPos+1);
+            if (!isNumberOrMineSquare(mFieldObjects[xPos+1][yPos+1].getSquareImageToShow())) {
+                unCoverEmptySquares(xPos + 1, yPos + 1);
+            }
         }
-        if ((yPos + 1) < VERTICAL_SIZE &&
-                (isEmptySquare(mFieldObjects[xPos][yPos+1].getSquareImageToShow())) &&
+        if ((yPos + 1) < VERTICAL_SIZE && mFieldObjects[xPos][yPos+1].getSquareImageToShow() != MINE &&
                 mFieldObjects[xPos][yPos+1].isCovered()) { //Bottom position
             unCoverSquare(xPos, yPos+1);
-            unCoverEmptySquares(xPos, yPos+1);
+            if (!isNumberOrMineSquare(mFieldObjects[xPos][yPos+1].getSquareImageToShow())) {
+                unCoverEmptySquares(xPos, yPos + 1);
+            }
         }
     }
 
-    private boolean isEmptySquare(int imageToShow) {
+    private boolean isNumberOrMineSquare(int imageToShow) {
         switch (imageToShow) {
-            case MINE: return false;
-            case ONE: return false;
-            case TWO: return false;
-            case THREE: return false;
-            case FOUR: return false;
-            case FIVE: return false;
-            case SIX: return false;
-            case SEVEN: return false;
-            case EIGHT: return false;
-            default: return true;
+            case MINE: return true;
+            case ONE: return true;
+            case TWO: return true;
+            case THREE: return true;
+            case FOUR: return true;
+            case FIVE: return true;
+            case SIX: return true;
+            case SEVEN: return true;
+            case EIGHT: return true;
+            default: return false;
         }
     }
+
 
     private void unCoverSquare(int x, int y) {
         mFieldObjects[x][y].setCovered(false);
@@ -245,19 +261,24 @@ public class MineFieldActivity extends AppCompatActivity {
                 imageView.setImageDrawable(getResources().getDrawable(R.drawable.covered));
                 mFieldObjects[i][j].setSquareView(squareView);
                 mMineFiled.addView(squareView);
-                setOnClickListener(i, j, squareView, imageView, getResourceId(i, j));
-                setOnLongClickListener(squareView, imageView);
+                setOnClickListener(i, j, mFieldObjects[i][j], imageView, getResourceId(i, j));
+                setOnLongClickListener(mFieldObjects[i][j], imageView);
             }
         }
     }
 
-    private void setOnClickListener (final int xPos, final int yPos, final View squareView, final ImageView imageView, final int resourceId) {
-        squareView.setOnClickListener(new View.OnClickListener() {
+    private void setOnClickListener (final int xPos, final int yPos, final FieldObject fieldObject, final ImageView imageView, final int resourceId) {
+        fieldObject.getSquareView().setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                setFaceImage(FaceType.SCARED, true);
                 if (resourceId == R.drawable.uncovered) {
+                    setFaceImage(FaceType.SCARED, true);
                     unCoverEmptySquares(xPos, yPos);
+                } else if (resourceId == R.drawable.mine) {
+                    setFaceImage(FaceType.KILLED, false);
+                    uncoverAllSquares();
+                    stopTimer();
+                    return;
                 }
                 imageView.setImageDrawable(getResources().getDrawable(resourceId));
                 if (!mTimerStarted) {
@@ -267,19 +288,32 @@ public class MineFieldActivity extends AppCompatActivity {
         });
     }
 
-    private void setOnLongClickListener (View itemView, final ImageView imageView) {
-        itemView.setOnLongClickListener(new View.OnLongClickListener() {
+    private void setOnLongClickListener (final FieldObject fieldObject, final ImageView imageView) {
+        fieldObject.getSquareView().setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
-                setFaceImage(FaceType.SCARED, true);
-                mNumberOfMines--;
-                if (mNumberOfMines >= 0) {
-                    imageView.setImageDrawable(getResources().getDrawable(R.drawable.flaged));
-                    updateCounter(mNumberOfMines);
+                if (fieldObject.isCovered()) {
+                    setFaceImage(FaceType.SCARED, true);
+                    mNumberOfMines--;
+                    if (mNumberOfMines >= 0) {
+                        imageView.setImageDrawable(getResources().getDrawable(R.drawable.flaged));
+                        updateCounter(mNumberOfMines);
+                    }
                 }
                 return true;
             }
         });
+    }
+
+    private void uncoverAllSquares() {
+        for (int j = 0; j < VERTICAL_SIZE ; j++) {
+            for (int i = 0; i < HORIZONTAL_SIZE ; i++) {
+                unCoverSquare(i, j);
+                mFieldObjects[i][j].getSquareView().setOnClickListener(null);
+                mFieldObjects[i][j].getSquareView().setOnLongClickListener(null);
+            }
+        }
+        mMineFiled.setClickable(false);
     }
 
     private void startTimer() {
@@ -289,7 +323,7 @@ public class MineFieldActivity extends AppCompatActivity {
         final ImageView tensSecondsImageView = findViewById(R.id.tens_seconds);
         final ImageView unitsSecondsImageView = findViewById(R.id.units_seconds);
 
-        new CountDownTimer(3600000, 1000) {
+        mCountDownTimer = new CountDownTimer(3600000, 1000) {
 
             public void onTick(long millisUntilFinished) {
                 Log.i(TAG, "millisUntilFinished: " + millisUntilFinished);
@@ -318,9 +352,19 @@ public class MineFieldActivity extends AppCompatActivity {
             }
 
             public void onFinish() {
-
+                setImageNumber(unitsMinutesImageView, 0);
+                setImageNumber(tensMinutesImageView, 0);
+                setImageNumber(unitsSecondsImageView, 0);
+                setImageNumber(tensSecondsImageView, 0);
             }
-        }.start();
+        };
+        mCountDownTimer.start();
+    }
+
+    private void stopTimer() {
+        if (mCountDownTimer != null) {
+            mCountDownTimer.cancel();
+        }
     }
 
     private void updateCounter(int number) {
@@ -354,7 +398,7 @@ public class MineFieldActivity extends AppCompatActivity {
         }
     }
 
-    private void setFaceImage(FaceType faceType, boolean keepSmiling) {
+    private void setFaceImage(FaceType faceType, final boolean keepSmiling) {
         int resource = 0;
         switch (faceType) {
             case ANGRY: resource = R.drawable.angry; break;
@@ -365,8 +409,7 @@ public class MineFieldActivity extends AppCompatActivity {
         }
         mFace.setImageDrawable(getResources().getDrawable(resource));
         if(keepSmiling) {
-            final Handler handler = new Handler();
-            handler.postDelayed(new Runnable() {
+            new Handler().postDelayed(new Runnable() {
                 @Override
                 public void run() {
                     mFace.setImageDrawable(getResources().getDrawable(R.drawable.smile));
