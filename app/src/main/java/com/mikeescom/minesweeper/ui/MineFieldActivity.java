@@ -1,15 +1,22 @@
 package com.mikeescom.minesweeper.ui;
 
-import android.content.Intent;
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.CountDownTimer;
 import android.os.Handler;
 import android.util.Log;
+import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.Button;
 import android.widget.GridLayout;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.PopupWindow;
+import android.widget.Toast;
 
 import com.mikeescom.minesweeper.R;
 import com.mikeescom.minesweeper.data.FieldObject;
@@ -20,7 +27,11 @@ public class MineFieldActivity extends AppCompatActivity {
 
     private static final String TAG = "MineFieldActivity";
 
-    private static final int DEFAULT_NUMBER_MINES = 20;
+    private static final String MINESWEEPER_PREFERENCES = "MINESWEEPER_PREFERENCES";
+    private static final String SP_DIFFICULTY = "SP_DIFFICULTY";
+    private static final int EASY_LEVEL_NUMBER_MINES = 36;
+    private static final int MEDIUM_LEVEL_NUMBER_MINES = 51;
+    private static final int HARD_LEVEL_NUMBER_MINES = 66;
     private static final int HORIZONTAL_SIZE = 12;
     private static final int VERTICAL_SIZE = 20;
     private static final int EMPTY = 0;
@@ -42,12 +53,15 @@ public class MineFieldActivity extends AppCompatActivity {
         SMILE
     }
 
+    private SharedPreferences sharedpreferences;
+
     private GridLayout mMineFiled;
     private ImageView mFace;
     private ImageView mSettings;
 
     private CountDownTimer mCountDownTimer;
     private boolean mTimerStarted;
+    private int mDefaultNumberOfMines;
     private int mNumberOfMines;
     private int mMinesFound = 0;
     private FieldObject[][] mFieldObjects = new FieldObject[HORIZONTAL_SIZE][VERTICAL_SIZE];
@@ -64,7 +78,9 @@ public class MineFieldActivity extends AppCompatActivity {
     }
 
     private void initData() {
-        mNumberOfMines = DEFAULT_NUMBER_MINES;
+        sharedpreferences = getSharedPreferences(MINESWEEPER_PREFERENCES, Context.MODE_PRIVATE);
+        mDefaultNumberOfMines = getDifficulty();
+        mNumberOfMines = mDefaultNumberOfMines;
     }
 
     private void initView() {
@@ -80,8 +96,7 @@ public class MineFieldActivity extends AppCompatActivity {
         mSettings.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(MineFieldActivity.this, SettingsActivity.class);
-                startActivity(intent);
+                showSettingsPopupWindowClick(mMineFiled.getRootView());
             }
         });
         updateCounter(mNumberOfMines);
@@ -296,19 +311,29 @@ public class MineFieldActivity extends AppCompatActivity {
         fieldObject.getSquareView().setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
+                if (fieldObject.isFlagged()) {
+                    Log.i(TAG, "Square un flagged");
+                    setFaceImage(FaceType.ANGRY, true);
+                    mNumberOfMines++;
+                    imageView.setImageDrawable(getResources().getDrawable(R.drawable.covered));
+                    fieldObject.setFlagged(false);
+                    updateCounter(mNumberOfMines);
+                    return true;
+                }
                 if (fieldObject.isCovered()) {
+                    Log.i(TAG, "Square flagged" );
                     setFaceImage(FaceType.SCARED, true);
                     mNumberOfMines--;
                     if (mNumberOfMines >= 0) {
                         if (fieldObject.getSquareImageToShow() == MINE) {
                             mMinesFound++;
                         }
-                        if (mMinesFound == DEFAULT_NUMBER_MINES) {
+                        if (mMinesFound == mDefaultNumberOfMines) {
                             Log.i(TAG, "You won!" + mMinesFound);
                             setFaceImage(FaceType.HAPPY, false);
                         }
-                        Log.i(TAG, "Mine flagged:" + mMinesFound);
                         imageView.setImageDrawable(getResources().getDrawable(R.drawable.flaged));
+                        fieldObject.setFlagged(true);
                         updateCounter(mNumberOfMines);
                     }
                 }
@@ -428,5 +453,70 @@ public class MineFieldActivity extends AppCompatActivity {
                 }
             }, 500);
         }
+    }
+
+    private void setDifficulty(int difficulty) {
+        SharedPreferences.Editor editor = sharedpreferences.edit();
+        editor.putInt(SP_DIFFICULTY, difficulty);
+        editor.commit();
+    }
+
+    private int getDifficulty() {
+        return sharedpreferences.getInt(SP_DIFFICULTY, EASY_LEVEL_NUMBER_MINES);
+    }
+
+    private void dismissSettingsPopupWindow(PopupWindow popupWindow, int difficulty, boolean updateDifficulty) {
+        String toastText = "";
+        popupWindow.dismiss();
+        if (updateDifficulty) {
+            setDifficulty(difficulty);
+            recreate();
+            switch (difficulty) {
+                case EASY_LEVEL_NUMBER_MINES: toastText = "Easy level"; break;
+                case MEDIUM_LEVEL_NUMBER_MINES: toastText = "Medium level"; break;
+                case HARD_LEVEL_NUMBER_MINES: toastText = "Hard level"; break;
+            }
+            Toast.makeText(this, toastText, Toast.LENGTH_LONG).show();
+        }
+    }
+
+    public void showSettingsPopupWindowClick(View view) {
+        LayoutInflater inflater = (LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
+        View popupView = inflater.inflate(R.layout.popup_windows_settings_layout, null);
+        ImageView easy = popupView.findViewById(R.id.easy);
+        ImageView medium = popupView.findViewById(R.id.medium);
+        ImageView difficult = popupView.findViewById(R.id.difficult);
+        Button cancel = popupView.findViewById(R.id.cancel);
+
+        int width = LinearLayout.LayoutParams.MATCH_PARENT;
+        int height = LinearLayout.LayoutParams.WRAP_CONTENT;
+        final PopupWindow popupWindow = new PopupWindow(popupView, width, height, false);
+
+        popupWindow.showAtLocation(view, Gravity.CENTER, 0, 0);
+        view.setClickable(false);
+        easy.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                dismissSettingsPopupWindow(popupWindow, EASY_LEVEL_NUMBER_MINES, true);
+            }
+        });
+        medium.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                dismissSettingsPopupWindow(popupWindow, MEDIUM_LEVEL_NUMBER_MINES, true);
+            }
+        });
+        difficult.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                dismissSettingsPopupWindow(popupWindow, HARD_LEVEL_NUMBER_MINES, true);
+            }
+        });
+        cancel.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                dismissSettingsPopupWindow(popupWindow, EASY_LEVEL_NUMBER_MINES, false);
+            }
+        });
     }
 }

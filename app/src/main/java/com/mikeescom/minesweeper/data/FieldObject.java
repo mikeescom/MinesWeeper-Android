@@ -6,6 +6,7 @@ public class FieldObject {
     private View squareView;
     private int squareImageToShow = 0;
     private boolean covered = true;
+    private boolean flagged = false;
 
     public FieldObject (View squareView, int squareImageToShow) {
         this.squareView = squareView;
@@ -34,5 +35,13 @@ public class FieldObject {
 
     public void setCovered(boolean covered) {
         this.covered = covered;
+    }
+
+    public boolean isFlagged() {
+        return flagged;
+    }
+
+    public void setFlagged(boolean flagged) {
+        this.flagged = flagged;
     }
 }
