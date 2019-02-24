@@ -10,17 +10,20 @@ import android.os.Handler;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.GridLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.mikeescom.minesweeper.R;
 import com.mikeescom.minesweeper.data.FieldObject;
 
+import java.time.LocalTime;
 import java.util.Random;
 
 public class MineFieldActivity extends AppCompatActivity {
@@ -64,6 +67,7 @@ public class MineFieldActivity extends AppCompatActivity {
     private int mDefaultNumberOfMines;
     private int mNumberOfMines;
     private int mMinesFound = 0;
+    private int mChronometerTime = 0;
     private FieldObject[][] mFieldObjects = new FieldObject[HORIZONTAL_SIZE][VERTICAL_SIZE];
 
     @Override
@@ -331,6 +335,9 @@ public class MineFieldActivity extends AppCompatActivity {
                         if (mMinesFound == mDefaultNumberOfMines) {
                             Log.i(TAG, "You won!" + mMinesFound);
                             setFaceImage(FaceType.HAPPY, false);
+                            showFinishedGamePopupWindowClick(mMineFiled.getRootView());
+                            stopTimer();
+                            return true;
                         }
                         imageView.setImageDrawable(getResources().getDrawable(R.drawable.flaged));
                         fieldObject.setFlagged(true);
@@ -365,13 +372,15 @@ public class MineFieldActivity extends AppCompatActivity {
             public void onTick(long millisUntilFinished) {
                 Log.i(TAG, "millisUntilFinished: " + millisUntilFinished);
                 Log.i(TAG, "millisSinceStarted: " + (3600000 - millisUntilFinished));
+                long millisSinceStarted = 3600000 - millisUntilFinished;
+                long secondsSinceStarted = (millisSinceStarted - (millisSinceStarted % 1000)) / 1000;
                 int seconds = 0;
                 int minutes = 0;
-                int chronometerTime = (int)((3600000 - millisUntilFinished) / 1000);
-                Log.i(TAG, "Time: " + chronometerTime );
-                minutes = chronometerTime / 60;
-                seconds = chronometerTime - (minutes * 60);
-                if ((chronometerTime % 60) != 0) {
+                mChronometerTime = (int)secondsSinceStarted;
+                Log.i(TAG, "Time: " + mChronometerTime );
+                minutes = mChronometerTime / 60;
+                seconds = mChronometerTime - (minutes * 60);
+                if ((mChronometerTime % 60) != 0) {
                     int units = seconds % 10;
                     seconds = seconds / 10;
                     int tens = seconds % 10;
@@ -490,10 +499,9 @@ public class MineFieldActivity extends AppCompatActivity {
 
         int width = LinearLayout.LayoutParams.MATCH_PARENT;
         int height = LinearLayout.LayoutParams.WRAP_CONTENT;
-        final PopupWindow popupWindow = new PopupWindow(popupView, width, height, false);
-
+        final PopupWindow popupWindow = new PopupWindow(popupView, width, height, true);
+        popupWindow.setElevation(5.0f);
         popupWindow.showAtLocation(view, Gravity.CENTER, 0, 0);
-        view.setClickable(false);
         easy.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -516,6 +524,42 @@ public class MineFieldActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 dismissSettingsPopupWindow(popupWindow, EASY_LEVEL_NUMBER_MINES, false);
+            }
+        });
+        popupView.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                dismissSettingsPopupWindow(popupWindow, EASY_LEVEL_NUMBER_MINES, false);
+                return true;
+            }
+        });
+    }
+
+    public void showFinishedGamePopupWindowClick(View view) {
+        LayoutInflater inflater = (LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
+        View popupView = inflater.inflate(R.layout.popup_windows_finished_game_layout, null);
+        Button playAgain = popupView.findViewById(R.id.play_again);
+        TextView finishTime = popupView.findViewById(R.id.finish_time);
+
+        int width = LinearLayout.LayoutParams.MATCH_PARENT;
+        int height = LinearLayout.LayoutParams.WRAP_CONTENT;
+        final PopupWindow popupWindow = new PopupWindow(popupView, width, height, true);
+        popupWindow.setElevation(5.0f);
+        LocalTime timeOfDay = LocalTime.ofSecondOfDay(mChronometerTime);
+        String time = timeOfDay.toString();
+        finishTime .setText(getResources().getString(R.string.your_time_was, time));
+        popupWindow.showAtLocation(view, Gravity.CENTER, 0, 0);
+        playAgain.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                dismissSettingsPopupWindow(popupWindow, getDifficulty(), true);
+            }
+        });
+        popupView.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                dismissSettingsPopupWindow(popupWindow, getDifficulty(), true);
+                return true;
             }
         });
     }
