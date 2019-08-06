@@ -1,4 +1,4 @@
-package com.mikeescom.minesweeper.ui;
+package com.msmikeescom.minesweeper.ui;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -20,8 +20,8 @@ import android.widget.PopupWindow;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.mikeescom.minesweeper.R;
-import com.mikeescom.minesweeper.data.FieldObject;
+import com.msmikeescom.minesweeper.R;
+import com.msmikeescom.minesweeper.data.FieldObject;
 
 import java.time.LocalTime;
 import java.util.Random;

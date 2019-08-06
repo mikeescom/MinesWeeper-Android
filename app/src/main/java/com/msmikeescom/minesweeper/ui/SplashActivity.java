@@ -1,4 +1,4 @@
-package com.mikeescom.minesweeper.ui;
+package com.msmikeescom.minesweeper.ui;
 
 import androidx.appcompat.app.AppCompatActivity;
 

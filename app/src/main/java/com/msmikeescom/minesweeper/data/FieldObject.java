@@ -1,4 +1,4 @@
-package com.mikeescom.minesweeper.data;
+package com.msmikeescom.minesweeper.data;
 
 import android.view.View;
 
