@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:background="@color/digital_color_bg"
-    tools:context=".ui.MineFieldActivity">
+    tools:context=".ui.activity.MineFieldActivity">
 
     <LinearLayout
         android:id="@+id/information_layout"
@@ -60,55 +60,13 @@
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:src="@drawable/smile"/>
-        <!--TIMER-->
-        <androidx.constraintlayout.widget.ConstraintLayout
+        <!--CHRONOMETER-->
+        <com.msmikeescom.minesweeper.ui.view.MineFieldChronometer
+            android:id="@+id/chronometer"
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_weight="1.8"
-            android:background="@color/digital_color_bg">
-            <ImageView
-                android:id="@+id/tens_minutes"
-                android:layout_width="30dp"
-                android:layout_height="49dp"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintBottom_toBottomOf="parent"
-                android:src="@drawable/zero_digit"/>
-            <ImageView
-                android:id="@+id/units_minutes"
-                android:layout_width="30dp"
-                android:layout_height="49dp"
-                app:layout_constraintStart_toEndOf="@+id/tens_minutes"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintBottom_toBottomOf="parent"
-                android:src="@drawable/zero_digit"/>
-            <ImageView
-                android:id="@+id/clock_divider"
-                android:layout_width="5dp"
-                android:layout_height="49dp"
-                app:layout_constraintStart_toEndOf="@+id/units_minutes"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintBottom_toBottomOf="parent"
-                android:src="@drawable/zero_digit"/>
-            <ImageView
-                android:id="@+id/tens_seconds"
-                android:layout_width="30dp"
-                android:layout_height="49dp"
-                app:layout_constraintStart_toEndOf="@+id/clock_divider"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintBottom_toBottomOf="parent"
-                android:src="@drawable/zero_digit" />
-            <ImageView
-                android:id="@+id/units_seconds"
-                android:layout_width="30dp"
-                android:layout_height="49dp"
-                app:layout_constraintStart_toEndOf="@+id/tens_seconds"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintBottom_toBottomOf="parent"
-                android:src="@drawable/zero_digit" />
-        </androidx.constraintlayout.widget.ConstraintLayout>
-    </LinearLayout>
+            android:layout_weight="1.8"/>
+     </LinearLayout>
 
     <GridLayout
         android:id="@+id/mine_field"
