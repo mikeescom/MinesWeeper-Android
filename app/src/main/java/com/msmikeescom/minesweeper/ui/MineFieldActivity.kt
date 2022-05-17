@@ -11,6 +11,7 @@ import android.view.View
 import android.view.View.OnLongClickListener
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.res.ResourcesCompat
 import com.msmikeescom.minesweeper.R
 import com.msmikeescom.minesweeper.data.FieldObject
 import java.time.LocalTime
@@ -51,9 +52,9 @@ class MineFieldActivity : AppCompatActivity() {
     private fun initView() {
         mMineFiled = findViewById(R.id.mine_field)
         mFace = findViewById(R.id.face)
-        mFace?.setOnClickListener(View.OnClickListener { recreate() })
+        mFace?.setOnClickListener { recreate() }
         mSettings = findViewById(R.id.settings)
-        mSettings?.setOnClickListener(View.OnClickListener { showSettingsPopupWindowClick(mMineFiled?.rootView) })
+        mSettings?.setOnClickListener { showSettingsPopupWindowClick(mMineFiled?.rootView) }
         updateCounter(mNumberOfMines)
     }
 
@@ -191,12 +192,11 @@ class MineFieldActivity : AppCompatActivity() {
 
     private fun unCoverSquare(x: Int, y: Int) {
         mFieldObjects[x][y]!!.isCovered = false
-        (mFieldObjects[x][y]!!.squareView?.findViewById<View>(R.id.image_button) as ImageView).setImageDrawable(resources.getDrawable(getResourceId(x, y)))
+        (mFieldObjects[x][y]!!.squareView?.findViewById<View>(R.id.image_button) as ImageView).setImageDrawable(ResourcesCompat.getDrawable(resources, getResourceId(x, y), null))
     }
 
     private fun getResourceId(x: Int, y: Int): Int {
-        var resourceId = R.drawable.uncovered
-        resourceId = when (mFieldObjects[x][y]!!.squareImageToShow) {
+        val resourceId = when (mFieldObjects[x][y]!!.squareImageToShow) {
             MINE -> R.drawable.mine
             ONE -> R.drawable.one
             TWO -> R.drawable.two
@@ -218,7 +218,7 @@ class MineFieldActivity : AppCompatActivity() {
             for (i in 0 until HORIZONTAL_SIZE) {
                 val squareView = layoutInflater.inflate(R.layout.square_layout, null)
                 val imageView = squareView.findViewById<ImageView>(R.id.image_button)
-                imageView.setImageDrawable(resources.getDrawable(R.drawable.covered))
+                imageView.setImageDrawable(ResourcesCompat.getDrawable(resources, R.drawable.covered, null))
                 mFieldObjects[i][j]!!.squareView = squareView
                 mMineFiled!!.addView(squareView)
                 setOnClickListener(i, j, mFieldObjects[i][j], imageView, getResourceId(i, j))
@@ -238,7 +238,7 @@ class MineFieldActivity : AppCompatActivity() {
                 stopTimer()
                 return@OnClickListener
             }
-            imageView.setImageDrawable(resources.getDrawable(resourceId))
+            imageView.setImageDrawable(ResourcesCompat.getDrawable(resources, resourceId, null))
             if (!mTimerStarted) {
                 startTimer()
             }
@@ -251,7 +251,7 @@ class MineFieldActivity : AppCompatActivity() {
                 Log.i(TAG, "Square un flagged")
                 setFaceImage(FaceType.ANGRY, true)
                 mNumberOfMines++
-                imageView.setImageDrawable(resources.getDrawable(R.drawable.covered))
+                imageView.setImageDrawable(ResourcesCompat.getDrawable(resources, R.drawable.covered, null))
                 fieldObject.isFlagged = false
                 updateCounter(mNumberOfMines)
                 return@OnLongClickListener true
@@ -271,7 +271,7 @@ class MineFieldActivity : AppCompatActivity() {
                         stopTimer()
                         return@OnLongClickListener true
                     }
-                    imageView.setImageDrawable(resources.getDrawable(R.drawable.flaged))
+                    imageView.setImageDrawable(ResourcesCompat.getDrawable(resources, R.drawable.flaged, null))
                     fieldObject.isFlagged = true
                     updateCounter(mNumberOfMines)
                 }
@@ -303,21 +303,20 @@ class MineFieldActivity : AppCompatActivity() {
                 Log.i(TAG, "millisSinceStarted: " + (3600000 - millisUntilFinished))
                 val millisSinceStarted = 3600000 - millisUntilFinished
                 val secondsSinceStarted = (millisSinceStarted - millisSinceStarted % 1000) / 1000
-                var seconds = 0
-                var minutes = 0
+                var seconds: Int
                 mChronometerTime = secondsSinceStarted.toInt()
                 Log.i(TAG, "Time: $mChronometerTime")
-                minutes = mChronometerTime / 60
+                var minutes: Int = mChronometerTime / 60
                 seconds = mChronometerTime - minutes * 60
                 if (mChronometerTime % 60 != 0) {
                     val units = seconds % 10
-                    seconds = seconds / 10
+                    seconds /= 10
                     val tens = seconds % 10
                     setImageNumber(unitsSecondsImageView, units)
                     setImageNumber(tensSecondsImageView, tens)
                 } else {
                     val units = minutes % 10
-                    minutes = minutes / 10
+                    minutes /= 10
                     val tens = minutes % 10
                     setImageNumber(unitsMinutesImageView, units)
                     setImageNumber(tensMinutesImageView, tens)
@@ -343,15 +342,15 @@ class MineFieldActivity : AppCompatActivity() {
     }
 
     private fun updateCounter(number: Int) {
-        var number = number
+        var numberTemp = number
         val hundredsImageView = findViewById<ImageView>(R.id.counter_hundreds)
         val tensImageView = findViewById<ImageView>(R.id.counter_tens)
         val unitsImageView = findViewById<ImageView>(R.id.counter_units)
-        val units = number % 10
-        number = number / 10
-        val tens = number % 10
-        number = number / 10
-        val hundreds = number % 10
+        val units = numberTemp % 10
+        numberTemp /= 10
+        val tens = numberTemp % 10
+        numberTemp /= 10
+        val hundreds = numberTemp % 10
         setImageNumber(unitsImageView, units)
         setImageNumber(tensImageView, tens)
         setImageNumber(hundredsImageView, hundreds)
@@ -359,31 +358,30 @@ class MineFieldActivity : AppCompatActivity() {
 
     private fun setImageNumber(imageView: ImageView, digit: Int) {
         when (digit) {
-            0 -> imageView.setImageDrawable(resources.getDrawable(R.drawable.zero_digit))
-            1 -> imageView.setImageDrawable(resources.getDrawable(R.drawable.one_digit))
-            2 -> imageView.setImageDrawable(resources.getDrawable(R.drawable.two_digit))
-            3 -> imageView.setImageDrawable(resources.getDrawable(R.drawable.three_digit))
-            4 -> imageView.setImageDrawable(resources.getDrawable(R.drawable.four_digit))
-            5 -> imageView.setImageDrawable(resources.getDrawable(R.drawable.five_digit))
-            6 -> imageView.setImageDrawable(resources.getDrawable(R.drawable.six_digit))
-            7 -> imageView.setImageDrawable(resources.getDrawable(R.drawable.seven_digit))
-            8 -> imageView.setImageDrawable(resources.getDrawable(R.drawable.eight_digit))
-            9 -> imageView.setImageDrawable(resources.getDrawable(R.drawable.nine_digit))
+            0 -> imageView.setImageDrawable(ResourcesCompat.getDrawable(resources, R.drawable.zero_digit, null))
+            1 -> imageView.setImageDrawable(ResourcesCompat.getDrawable(resources, R.drawable.one_digit, null))
+            2 -> imageView.setImageDrawable(ResourcesCompat.getDrawable(resources, R.drawable.two_digit, null))
+            3 -> imageView.setImageDrawable(ResourcesCompat.getDrawable(resources, R.drawable.three_digit, null))
+            4 -> imageView.setImageDrawable(ResourcesCompat.getDrawable(resources, R.drawable.four_digit, null))
+            5 -> imageView.setImageDrawable(ResourcesCompat.getDrawable(resources, R.drawable.five_digit, null))
+            6 -> imageView.setImageDrawable(ResourcesCompat.getDrawable(resources, R.drawable.six_digit, null))
+            7 -> imageView.setImageDrawable(ResourcesCompat.getDrawable(resources, R.drawable.seven_digit, null))
+            8 -> imageView.setImageDrawable(ResourcesCompat.getDrawable(resources, R.drawable.eight_digit, null))
+            9 -> imageView.setImageDrawable(ResourcesCompat.getDrawable(resources, R.drawable.nine_digit, null))
         }
     }
 
     private fun setFaceImage(faceType: FaceType, keepSmiling: Boolean) {
-        var resource = 0
-        resource = when (faceType) {
+        val resource: Int = when (faceType) {
             FaceType.ANGRY -> R.drawable.angry
             FaceType.HAPPY -> R.drawable.happy
             FaceType.KILLED -> R.drawable.killed
             FaceType.SCARED -> R.drawable.scared
             FaceType.SMILE -> R.drawable.smile
         }
-        mFace!!.setImageDrawable(resources.getDrawable(resource))
+        mFace!!.setImageDrawable(ResourcesCompat.getDrawable(resources, resource, null))
         if (keepSmiling) {
-            Handler().postDelayed({ mFace!!.setImageDrawable(resources.getDrawable(R.drawable.smile)) }, 500)
+            Handler().postDelayed({ mFace!!.setImageDrawable(ResourcesCompat.getDrawable(resources, R.drawable.smile, null)) }, 500)
         }
     }
 
@@ -392,7 +390,7 @@ class MineFieldActivity : AppCompatActivity() {
         private set(difficulty) {
             val editor = sharedPreferences!!.edit()
             editor.putInt(SP_DIFFICULTY, difficulty)
-            editor.commit()
+            editor.apply()
         }
 
     private fun dismissSettingsPopupWindow(popupWindow: PopupWindow, difficulty: Int, updateDifficulty: Boolean) {
@@ -410,7 +408,7 @@ class MineFieldActivity : AppCompatActivity() {
         }
     }
 
-    fun showSettingsPopupWindowClick(view: View?) {
+    private fun showSettingsPopupWindowClick(view: View?) {
         val inflater = getSystemService(LAYOUT_INFLATER_SERVICE) as LayoutInflater
         val popupView = inflater.inflate(R.layout.popup_windows_settings_layout, null)
         val easy = popupView.findViewById<ImageView>(R.id.easy)
@@ -426,13 +424,13 @@ class MineFieldActivity : AppCompatActivity() {
         medium.setOnClickListener { dismissSettingsPopupWindow(popupWindow, MEDIUM_LEVEL_NUMBER_MINES, true) }
         difficult.setOnClickListener { dismissSettingsPopupWindow(popupWindow, HARD_LEVEL_NUMBER_MINES, true) }
         cancel.setOnClickListener { dismissSettingsPopupWindow(popupWindow, EASY_LEVEL_NUMBER_MINES, false) }
-        popupView.setOnTouchListener { v, event ->
+        popupView.setOnTouchListener { _, _ ->
             dismissSettingsPopupWindow(popupWindow, EASY_LEVEL_NUMBER_MINES, false)
             true
         }
     }
 
-    fun showFinishedGamePopupWindowClick(view: View?) {
+    private fun showFinishedGamePopupWindowClick(view: View?) {
         val inflater = getSystemService(LAYOUT_INFLATER_SERVICE) as LayoutInflater
         val popupView = inflater.inflate(R.layout.popup_windows_finished_game_layout, null)
         val playAgain = popupView.findViewById<Button>(R.id.play_again)
@@ -446,7 +444,7 @@ class MineFieldActivity : AppCompatActivity() {
         finishTime.text = resources.getString(R.string.your_time_was, time)
         popupWindow.showAtLocation(view, Gravity.CENTER, 0, 0)
         playAgain.setOnClickListener { dismissSettingsPopupWindow(popupWindow, difficulty, true) }
-        popupView.setOnTouchListener { v, event ->
+        popupView.setOnTouchListener { _, _ ->
             dismissSettingsPopupWindow(popupWindow, difficulty, true)
             true
         }
