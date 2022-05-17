@@ -1,8 +1,7 @@
-package com.msmikeescom.minesweeper.ui
+package com.msmikeescom.minesweeper.ui.activity
 
 import android.content.SharedPreferences
 import android.os.Bundle
-import android.os.CountDownTimer
 import android.os.Handler
 import android.util.Log
 import android.view.Gravity
@@ -14,7 +13,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.res.ResourcesCompat
 import com.msmikeescom.minesweeper.R
 import com.msmikeescom.minesweeper.data.FieldObject
-import java.time.LocalTime
+import com.msmikeescom.minesweeper.ui.view.MineFieldChronometer
 import java.util.*
 
 class MineFieldActivity : AppCompatActivity() {
@@ -22,16 +21,15 @@ class MineFieldActivity : AppCompatActivity() {
         ANGRY, HAPPY, KILLED, SCARED, SMILE
     }
 
+    private var chronometer: MineFieldChronometer? = null
+
     private var sharedPreferences: SharedPreferences? = null
     private var mMineFiled: GridLayout? = null
     private var mFace: ImageView? = null
     private var mSettings: ImageView? = null
-    private var mCountDownTimer: CountDownTimer? = null
-    private var mTimerStarted = false
     private var mDefaultNumberOfMines = 0
     private var mNumberOfMines = 0
     private var mMinesFound = 0
-    private var mChronometerTime = 0
     private val mFieldObjects = Array(HORIZONTAL_SIZE) { arrayOfNulls<FieldObject>(VERTICAL_SIZE) }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -50,6 +48,7 @@ class MineFieldActivity : AppCompatActivity() {
     }
 
     private fun initView() {
+        chronometer = findViewById(R.id.chronometer)
         mMineFiled = findViewById(R.id.mine_field)
         mFace = findViewById(R.id.face)
         mFace?.setOnClickListener { recreate() }
@@ -235,12 +234,12 @@ class MineFieldActivity : AppCompatActivity() {
             } else if (resourceId == R.drawable.mine) {
                 setFaceImage(FaceType.KILLED, false)
                 uncoverAllSquares()
-                stopTimer()
+                chronometer?.stopTimer()
                 return@OnClickListener
             }
             imageView.setImageDrawable(ResourcesCompat.getDrawable(resources, resourceId, null))
-            if (!mTimerStarted) {
-                startTimer()
+            if (chronometer?.mTimerStarted == false) {
+                chronometer?.startTimer()
             }
         })
     }
@@ -268,7 +267,7 @@ class MineFieldActivity : AppCompatActivity() {
                         Log.i(TAG, "You won!$mMinesFound")
                         setFaceImage(FaceType.HAPPY, false)
                         showFinishedGamePopupWindowClick(mMineFiled!!.rootView)
-                        stopTimer()
+                        chronometer?.stopTimer()
                         return@OnLongClickListener true
                     }
                     imageView.setImageDrawable(ResourcesCompat.getDrawable(resources, R.drawable.flaged, null))
@@ -289,56 +288,6 @@ class MineFieldActivity : AppCompatActivity() {
             }
         }
         mMineFiled!!.isClickable = false
-    }
-
-    private fun startTimer() {
-        mTimerStarted = true
-        val tensMinutesImageView = findViewById<ImageView>(R.id.tens_minutes)
-        val unitsMinutesImageView = findViewById<ImageView>(R.id.units_minutes)
-        val tensSecondsImageView = findViewById<ImageView>(R.id.tens_seconds)
-        val unitsSecondsImageView = findViewById<ImageView>(R.id.units_seconds)
-        mCountDownTimer = object : CountDownTimer(3600000, 1000) {
-            override fun onTick(millisUntilFinished: Long) {
-                Log.i(TAG, "millisUntilFinished: $millisUntilFinished")
-                Log.i(TAG, "millisSinceStarted: " + (3600000 - millisUntilFinished))
-                val millisSinceStarted = 3600000 - millisUntilFinished
-                val secondsSinceStarted = (millisSinceStarted - millisSinceStarted % 1000) / 1000
-                var seconds: Int
-                mChronometerTime = secondsSinceStarted.toInt()
-                Log.i(TAG, "Time: $mChronometerTime")
-                var minutes: Int = mChronometerTime / 60
-                seconds = mChronometerTime - minutes * 60
-                if (mChronometerTime % 60 != 0) {
-                    val units = seconds % 10
-                    seconds /= 10
-                    val tens = seconds % 10
-                    setImageNumber(unitsSecondsImageView, units)
-                    setImageNumber(tensSecondsImageView, tens)
-                } else {
-                    val units = minutes % 10
-                    minutes /= 10
-                    val tens = minutes % 10
-                    setImageNumber(unitsMinutesImageView, units)
-                    setImageNumber(tensMinutesImageView, tens)
-                    setImageNumber(unitsSecondsImageView, 0)
-                    setImageNumber(tensSecondsImageView, 0)
-                }
-            }
-
-            override fun onFinish() {
-                setImageNumber(unitsMinutesImageView, 0)
-                setImageNumber(tensMinutesImageView, 0)
-                setImageNumber(unitsSecondsImageView, 0)
-                setImageNumber(tensSecondsImageView, 0)
-            }
-        }
-        mCountDownTimer?.start()
-    }
-
-    private fun stopTimer() {
-        if (mCountDownTimer != null) {
-            mCountDownTimer!!.cancel()
-        }
     }
 
     private fun updateCounter(number: Int) {
@@ -439,7 +388,7 @@ class MineFieldActivity : AppCompatActivity() {
         val height = LinearLayout.LayoutParams.WRAP_CONTENT
         val popupWindow = PopupWindow(popupView, width, height, true)
         popupWindow.elevation = 5.0f
-        val timeOfDay = LocalTime.ofSecondOfDay(mChronometerTime.toLong())
+        val timeOfDay = chronometer?.mChronometerTime?.toLong() ?: { 0 }
         val time = timeOfDay.toString()
         finishTime.text = resources.getString(R.string.your_time_was, time)
         popupWindow.showAtLocation(view, Gravity.CENTER, 0, 0)
