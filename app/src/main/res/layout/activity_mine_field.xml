@@ -17,7 +17,12 @@
         android:padding="6dp"
         android:background="@color/digital_color_bg">
         <!--COUNTER-->
-        <androidx.constraintlayout.widget.ConstraintLayout
+        <com.msmikeescom.minesweeper.ui.view.MinesCounter
+            android:id="@+id/mines_counter"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1.2"/>
+        <!--androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1.2"
@@ -47,7 +52,7 @@
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent"
                 android:src="@drawable/zero_digit" />
-        </androidx.constraintlayout.widget.ConstraintLayout>
+        </androidx.constraintlayout.widget.ConstraintLayout-->
         <ImageView
             android:id="@+id/settings"
             android:layout_width="0dp"
