@@ -14,6 +14,7 @@ import androidx.core.content.res.ResourcesCompat
 import com.msmikeescom.minesweeper.R
 import com.msmikeescom.minesweeper.data.FieldObject
 import com.msmikeescom.minesweeper.ui.view.MineFieldChronometer
+import com.msmikeescom.minesweeper.ui.view.MinesCounter
 import java.util.*
 
 class MineFieldActivity : AppCompatActivity() {
@@ -22,6 +23,7 @@ class MineFieldActivity : AppCompatActivity() {
     }
 
     private var chronometer: MineFieldChronometer? = null
+    private var minesCounter: MinesCounter? = null
 
     private var sharedPreferences: SharedPreferences? = null
     private var mMineFiled: GridLayout? = null
@@ -49,12 +51,13 @@ class MineFieldActivity : AppCompatActivity() {
 
     private fun initView() {
         chronometer = findViewById(R.id.chronometer)
+        minesCounter = findViewById(R.id.mines_counter)
         mMineFiled = findViewById(R.id.mine_field)
         mFace = findViewById(R.id.face)
         mFace?.setOnClickListener { recreate() }
         mSettings = findViewById(R.id.settings)
         mSettings?.setOnClickListener { showSettingsPopupWindowClick(mMineFiled?.rootView) }
-        updateCounter(mNumberOfMines)
+        minesCounter?.updateCounter(mNumberOfMines)
     }
 
     private fun initFieldObjectsArray() {
@@ -252,7 +255,7 @@ class MineFieldActivity : AppCompatActivity() {
                 mNumberOfMines++
                 imageView.setImageDrawable(ResourcesCompat.getDrawable(resources, R.drawable.covered, null))
                 fieldObject.isFlagged = false
-                updateCounter(mNumberOfMines)
+                minesCounter?.updateCounter(mNumberOfMines)
                 return@OnLongClickListener true
             }
             if (fieldObject.isCovered) {
@@ -272,7 +275,7 @@ class MineFieldActivity : AppCompatActivity() {
                     }
                     imageView.setImageDrawable(ResourcesCompat.getDrawable(resources, R.drawable.flaged, null))
                     fieldObject.isFlagged = true
-                    updateCounter(mNumberOfMines)
+                    minesCounter?.updateCounter(mNumberOfMines)
                 }
             }
             true
@@ -290,7 +293,7 @@ class MineFieldActivity : AppCompatActivity() {
         mMineFiled!!.isClickable = false
     }
 
-    private fun updateCounter(number: Int) {
+    /*private fun updateCounter(number: Int) {
         var numberTemp = number
         val hundredsImageView = findViewById<ImageView>(R.id.counter_hundreds)
         val tensImageView = findViewById<ImageView>(R.id.counter_tens)
@@ -303,7 +306,7 @@ class MineFieldActivity : AppCompatActivity() {
         setImageNumber(unitsImageView, units)
         setImageNumber(tensImageView, tens)
         setImageNumber(hundredsImageView, hundreds)
-    }
+    }*/
 
     private fun setImageNumber(imageView: ImageView, digit: Int) {
         when (digit) {
