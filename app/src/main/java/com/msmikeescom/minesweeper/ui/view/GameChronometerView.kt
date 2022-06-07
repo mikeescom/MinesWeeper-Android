@@ -9,10 +9,10 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.res.ResourcesCompat
 import com.msmikeescom.minesweeper.R
 
-class MineFieldChronometer: ConstraintLayout {
+class GameChronometerView: ConstraintLayout {
 
     companion object {
-        private const val TAG = "MineFieldChronometer"
+        private const val TAG = "GameChronometerView"
     }
 
     private var tensMinutes: ImageView? = null
@@ -39,7 +39,7 @@ class MineFieldChronometer: ConstraintLayout {
     }
 
     private fun initView() {
-        inflate(context, R.layout.mine_field_chronometer_layout, this)
+        inflate(context, R.layout.game_chronometer_view_layout, this)
         tensMinutes = findViewById(R.id.tens_minutes)
         unitsMinutes = findViewById(R.id.units_minutes)
         tensSeconds = findViewById(R.id.tens_seconds)

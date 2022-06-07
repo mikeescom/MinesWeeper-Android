@@ -1,4 +1,4 @@
-package com.msmikeescom.minesweeper.data
+package com.msmikeescom.minesweeper.model
 
 import android.view.View
 
