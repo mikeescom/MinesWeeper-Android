@@ -7,9 +7,9 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.res.ResourcesCompat
 import com.msmikeescom.minesweeper.R
 
-class MinesCounter : ConstraintLayout {
+class MinesCounterView : ConstraintLayout {
     companion object {
-        private const val TAG = "MinesCounter"
+        private const val TAG = "MinesCounterView"
     }
 
     private var hundredsImageView: ImageView? = null
@@ -29,7 +29,7 @@ class MinesCounter : ConstraintLayout {
     }
 
     private fun initView() {
-        inflate(context, R.layout.mines_counter_layout, this)
+        inflate(context, R.layout.mines_counter_view_layout, this)
         hundredsImageView = findViewById(R.id.counter_hundreds)
         tensImageView = findViewById(R.id.counter_tens)
         unitsImageView = findViewById(R.id.counter_units)

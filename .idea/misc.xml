@@ -3,10 +3,17 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="app/src/main/res/drawable/ic_launcher_background.xml" value="0.292" />
+        <entry key="app/src/main/res/layout/activity_main.xml" value="0.3640625" />
         <entry key="app/src/main/res/layout/activity_mine_field.xml" value="0.3640625" />
         <entry key="app/src/main/res/layout/chronometer_layout.xml" value="0.36302083333333335" />
+        <entry key="app/src/main/res/layout/fragment_login.xml" value="0.35" />
         <entry key="app/src/main/res/layout/mine_field_chronometer_layout.xml" value="0.36302083333333335" />
         <entry key="app/src/main/res/layout/mines_counter_layout.xml" value="0.3640625" />
+        <entry key="app/src/main/res/layout/popup_windows_finished_game_layout.xml" value="0.3640625" />
+        <entry key="app/src/main/res/layout/popup_windows_settings_layout.xml" value="0.3640625" />
+        <entry key="app/src/main/res/layout/square_layout.xml" value="0.3640625" />
+        <entry key="app/src/main/res/menu/menu_main.xml" value="0.3640625" />
       </map>
     </option>
   </component>
