@@ -1,7 +1,9 @@
 package com.msmikeescom.minesweeper.ui.activity
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import android.os.Handler
+import android.util.DisplayMetrics
 import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
@@ -19,47 +21,57 @@ import com.msmikeescom.minesweeper.ui.view.MinesCounterView
 import com.msmikeescom.minesweeper.utilities.Constants
 import com.msmikeescom.minesweeper.utilities.Constants.EIGHT
 import com.msmikeescom.minesweeper.utilities.Constants.EMPTY
+import com.msmikeescom.minesweeper.utilities.Constants.SQUARE_SIZE
 import com.msmikeescom.minesweeper.utilities.Constants.FIVE
 import com.msmikeescom.minesweeper.utilities.Constants.FOUR
 import com.msmikeescom.minesweeper.utilities.Constants.GOOGLE_SIGN_IN_ACCOUNT
-import com.msmikeescom.minesweeper.utilities.Constants.HORIZONTAL_SIZE
 import com.msmikeescom.minesweeper.utilities.Constants.MINE
 import com.msmikeescom.minesweeper.utilities.Constants.ONE
 import com.msmikeescom.minesweeper.utilities.Constants.SEVEN
 import com.msmikeescom.minesweeper.utilities.Constants.SIX
 import com.msmikeescom.minesweeper.utilities.Constants.THREE
 import com.msmikeescom.minesweeper.utilities.Constants.TWO
-import com.msmikeescom.minesweeper.utilities.Constants.VERTICAL_SIZE
 import com.msmikeescom.minesweeper.viewmodel.MineFieldViewModel
-import java.util.*
+import java.util.Random
+
 
 class MineFieldActivity : AppCompatActivity() {
+
+    companion object {
+        private const val TAG = "MineFieldActivity"
+    }
+
     private enum class FaceType {
         ANGRY, HAPPY, KILLED, SCARED, SMILE
     }
 
-    private lateinit var googleSignInAccount: GoogleSignInAccount
     private lateinit var viewModel: MineFieldViewModel
 
-    private var gameChronometerView: GameChronometerView? = null
+    private var mGoogleSignInAccount: GoogleSignInAccount? = null
+
+    private var mDifficulty: Constants.Difficulty = Constants.Difficulty.EASY
+    private var mMinesFound = 0
+    private var mDefaultNumberOfMines = 0
+    private var mCounterNumberOfMines = 0
+    private var mHorizontalSize = 0
+    private var mVerticalSize = 0
+
+    private var mFieldObjects = emptyArray<Array<FieldObject?>>()
+
+    private var mGameChronometerView: GameChronometerView? = null
     private var minesCounterView: MinesCounterView? = null
     private var mMineFiled: GridLayout? = null
     private var mFace: ImageView? = null
     private var mSettings: ImageView? = null
-    private var mDifficulty: Constants.Difficulty = Constants.Difficulty.EASY
-    private var mDefaultNumberOfMines = 0
-    private var mCounterNumberOfMines = 0
-    private var mMinesFound = 0
-    private val mFieldObjects = Array(HORIZONTAL_SIZE) { arrayOfNulls<FieldObject>(VERTICAL_SIZE) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_mine_field)
 
-        googleSignInAccount = intent?.getParcelableExtra(GOOGLE_SIGN_IN_ACCOUNT)!!
+        mGoogleSignInAccount = intent?.getParcelableExtra(GOOGLE_SIGN_IN_ACCOUNT)
 
         viewModel = ViewModelProvider(this)[MineFieldViewModel::class.java].also {
-            it.initViewModel(this, googleSignInAccount)
+            it.initViewModel(this, mGoogleSignInAccount)
         }
 
         viewModel.isViewModelInitialized.observe(this) { isInitialized ->
@@ -73,29 +85,49 @@ class MineFieldActivity : AppCompatActivity() {
                 mDefaultNumberOfMines = mDifficulty.numberOfMines
                 mCounterNumberOfMines = mDifficulty.numberOfMines
 
+                setMineFieldSize()
                 initFieldObjectsArray()
                 buildMineFiled()
                 initView()
                 initMineField()
             }
         }
+
+        viewModel.unCoverSquare.observe(this) {
+            unCoverSquare(it.first, it.second)
+        }
     }
 
     private fun initView() {
-        gameChronometerView = findViewById(R.id.chronometer)
+        mGameChronometerView = findViewById(R.id.chronometer)
         minesCounterView = findViewById(R.id.mines_counter)
         mMineFiled = findViewById(R.id.mine_field)
         mMineFiled?.removeAllViews()
         mFace = findViewById(R.id.face)
+        setFaceImage(FaceType.HAPPY, true)
         mFace?.setOnClickListener { viewModel.loadUserInfo() }
         mSettings = findViewById(R.id.settings)
         mSettings?.setOnClickListener { showSettingsPopupWindowClick(mMineFiled?.rootView) }
         minesCounterView?.updateCounter(mCounterNumberOfMines)
     }
 
+    private fun setMineFieldSize() {
+        val displayMetrics = DisplayMetrics()
+        windowManager.defaultDisplay.getMetrics(displayMetrics)
+        val height = displayMetrics.heightPixels
+        val width = displayMetrics.widthPixels
+        val mineFieldHeight = height / SQUARE_SIZE
+        val mineFieldWidth = width / SQUARE_SIZE
+        mVerticalSize = mineFieldHeight
+        mHorizontalSize = mineFieldWidth
+        Log.d(TAG, "Screen Size (height = $height, width = $width)")
+        Log.d(TAG, "Mine Filed Size (height = $mineFieldHeight, width = $mineFieldWidth)")
+        mFieldObjects = Array(mHorizontalSize) { arrayOfNulls<FieldObject>(mVerticalSize) }
+    }
+
     private fun initFieldObjectsArray() {
-        for (j in 0 until VERTICAL_SIZE) {
-            for (i in 0 until HORIZONTAL_SIZE) {
+        for (j in 0 until mVerticalSize) {
+            for (i in 0 until mHorizontalSize) {
                 mFieldObjects[i][j] = FieldObject(null, EMPTY)
             }
         }
@@ -107,9 +139,9 @@ class MineFieldActivity : AppCompatActivity() {
         var yMinePos: Int
         var i = 0
         while (i < mCounterNumberOfMines) {
-            xMinePos = rand.nextInt(HORIZONTAL_SIZE)
-            yMinePos = rand.nextInt(VERTICAL_SIZE)
-            if (mFieldObjects[xMinePos][yMinePos]!!.squareImageToShow != MINE) {
+            xMinePos = rand.nextInt(mHorizontalSize)
+            yMinePos = rand.nextInt(mVerticalSize)
+            if (mFieldObjects[xMinePos][yMinePos]?.squareImageToShow != MINE) {
                 mFieldObjects[xMinePos][yMinePos] = FieldObject(null, MINE)
                 i++
                 Log.d(TAG, "Mine set up at: [$xMinePos, $yMinePos]")
@@ -119,32 +151,32 @@ class MineFieldActivity : AppCompatActivity() {
     }
 
     private fun setUpFieldNumbers() {
-        for (j in 0 until VERTICAL_SIZE) {
-            for (i in 0 until HORIZONTAL_SIZE) {
-                if (mFieldObjects[i][j]!!.squareImageToShow == MINE) {
-                    if (i - 1 >= 0 && j - 1 >= 0 && mFieldObjects[i - 1][j - 1]!!.squareImageToShow != MINE) { //Start Top position
-                        mFieldObjects[i - 1][j - 1]!!.squareImageToShow = mFieldObjects[i - 1][j - 1]!!.squareImageToShow + 1
+        for (j in 0 until mVerticalSize) {
+            for (i in 0 until mHorizontalSize) {
+                if (mFieldObjects[i][j]?.squareImageToShow == MINE) {
+                    if (i - 1 >= 0 && j - 1 >= 0 && mFieldObjects[i - 1][j - 1]?.squareImageToShow != MINE) { //Start Top position
+                        mFieldObjects[i - 1][j - 1]?.squareImageToShow = mFieldObjects[i - 1][j - 1]?.squareImageToShow?.let { it + 1 } ?: 0
                     }
-                    if (i - 1 >= 0 && mFieldObjects[i - 1][j]!!.squareImageToShow != MINE) { //Start position
-                        mFieldObjects[i - 1][j]!!.squareImageToShow = mFieldObjects[i - 1][j]!!.squareImageToShow + 1
+                    if (i - 1 >= 0 && mFieldObjects[i - 1][j]?.squareImageToShow != MINE) { //Start position
+                        mFieldObjects[i - 1][j]?.squareImageToShow = mFieldObjects[i - 1][j]?.squareImageToShow?.let { it + 1 } ?: 0
                     }
-                    if (i - 1 >= 0 && j + 1 < VERTICAL_SIZE && mFieldObjects[i - 1][j + 1]!!.squareImageToShow != MINE) { //Start Bottom position
-                        mFieldObjects[i - 1][j + 1]!!.squareImageToShow = mFieldObjects[i - 1][j + 1]!!.squareImageToShow + 1
+                    if (i - 1 >= 0 && j + 1 < mVerticalSize && mFieldObjects[i - 1][j + 1]?.squareImageToShow != MINE) { //Start Bottom position
+                        mFieldObjects[i - 1][j + 1]?.squareImageToShow = mFieldObjects[i - 1][j + 1]?.squareImageToShow?.let { it + 1 } ?: 0
                     }
-                    if (j - 1 >= 0 && mFieldObjects[i][j - 1]!!.squareImageToShow != MINE) { //Top position
-                        mFieldObjects[i][j - 1]!!.squareImageToShow = mFieldObjects[i][j - 1]!!.squareImageToShow + 1
+                    if (j - 1 >= 0 && mFieldObjects[i][j - 1]?.squareImageToShow != MINE) { //Top position
+                        mFieldObjects[i][j - 1]?.squareImageToShow = mFieldObjects[i][j - 1]?.squareImageToShow?.let { it + 1 } ?: 0
                     }
-                    if (i + 1 < HORIZONTAL_SIZE && j - 1 >= 0 && mFieldObjects[i + 1][j - 1]!!.squareImageToShow != MINE) { //Top End position
-                        mFieldObjects[i + 1][j - 1]!!.squareImageToShow = mFieldObjects[i + 1][j - 1]!!.squareImageToShow + 1
+                    if (i + 1 < mHorizontalSize && j - 1 >= 0 && mFieldObjects[i + 1][j - 1]?.squareImageToShow != MINE) { //Top End position
+                        mFieldObjects[i + 1][j - 1]?.squareImageToShow = mFieldObjects[i + 1][j - 1]?.squareImageToShow?.let { it + 1 } ?: 0
                     }
-                    if (i + 1 < HORIZONTAL_SIZE && mFieldObjects[i + 1][j]!!.squareImageToShow != MINE) { //End position
-                        mFieldObjects[i + 1][j]!!.squareImageToShow = mFieldObjects[i + 1][j]!!.squareImageToShow + 1
+                    if (i + 1 < mHorizontalSize && mFieldObjects[i + 1][j]?.squareImageToShow != MINE) { //End position
+                        mFieldObjects[i + 1][j]?.squareImageToShow = mFieldObjects[i + 1][j]?.squareImageToShow?.let { it + 1 } ?: 0
                     }
-                    if (i + 1 < HORIZONTAL_SIZE && j + 1 < VERTICAL_SIZE && mFieldObjects[i + 1][j + 1]!!.squareImageToShow != MINE) { //End Bottom position
-                        mFieldObjects[i + 1][j + 1]!!.squareImageToShow = mFieldObjects[i + 1][j + 1]!!.squareImageToShow + 1
+                    if (i + 1 < mHorizontalSize && j + 1 < mVerticalSize && mFieldObjects[i + 1][j + 1]?.squareImageToShow != MINE) { //End Bottom position
+                        mFieldObjects[i + 1][j + 1]?.squareImageToShow = mFieldObjects[i + 1][j + 1]?.squareImageToShow?.let { it + 1 } ?: 0
                     }
-                    if (j + 1 < VERTICAL_SIZE && mFieldObjects[i][j + 1]!!.squareImageToShow != MINE) { //Bottom position
-                        mFieldObjects[i][j + 1]!!.squareImageToShow = mFieldObjects[i][j + 1]!!.squareImageToShow + 1
+                    if (j + 1 < mVerticalSize && mFieldObjects[i][j + 1]?.squareImageToShow != MINE) { //Bottom position
+                        mFieldObjects[i][j + 1]?.squareImageToShow = mFieldObjects[i][j + 1]?.squareImageToShow?.let { it + 1 } ?: 0
                     }
                 }
             }
@@ -152,86 +184,86 @@ class MineFieldActivity : AppCompatActivity() {
     }
 
     private fun unCoverEmptySquares(xPos: Int, yPos: Int) {
-        if (xPos - 1 >= 0 && yPos - 1 >= 0 && mFieldObjects[xPos - 1][yPos - 1]!!.squareImageToShow != MINE &&
-                mFieldObjects[xPos - 1][yPos - 1]!!.isCovered) { //Start Top position
+        if (xPos - 1 >= 0 && yPos - 1 >= 0 && mFieldObjects[xPos - 1][yPos - 1]?.squareImageToShow != MINE &&
+            mFieldObjects[xPos - 1][yPos - 1]?.isCovered == true) { //Start Top position
             unCoverSquare(xPos - 1, yPos - 1)
-            if (!isNumberOrMineSquare(mFieldObjects[xPos - 1][yPos - 1]!!.squareImageToShow)) {
+            if (!isNumberOrMineSquare(mFieldObjects[xPos - 1][yPos - 1]?.squareImageToShow)) {
                 unCoverEmptySquares(xPos - 1, yPos - 1)
             }
         }
-        if (xPos - 1 >= 0 && mFieldObjects[xPos - 1][yPos]!!.squareImageToShow != MINE &&
-                mFieldObjects[xPos - 1][yPos]!!.isCovered) { //Start position
+        if (xPos - 1 >= 0 && mFieldObjects[xPos - 1][yPos]?.squareImageToShow != MINE &&
+            mFieldObjects[xPos - 1][yPos]?.isCovered == true) { //Start position
             unCoverSquare(xPos - 1, yPos)
-            if (!isNumberOrMineSquare(mFieldObjects[xPos - 1][yPos]!!.squareImageToShow)) {
+            if (!isNumberOrMineSquare(mFieldObjects[xPos - 1][yPos]?.squareImageToShow)) {
                 unCoverEmptySquares(xPos - 1, yPos)
             }
         }
-        if (xPos - 1 >= 0 && yPos + 1 < VERTICAL_SIZE && mFieldObjects[xPos - 1][yPos + 1]!!.squareImageToShow != MINE &&
-                mFieldObjects[xPos - 1][yPos + 1]!!.isCovered) { //Start Bottom position
+        if (xPos - 1 >= 0 && yPos + 1 < mVerticalSize && mFieldObjects[xPos - 1][yPos + 1]?.squareImageToShow != MINE &&
+            mFieldObjects[xPos - 1][yPos + 1]?.isCovered == true) { //Start Bottom position
             unCoverSquare(xPos - 1, yPos + 1)
-            if (!isNumberOrMineSquare(mFieldObjects[xPos - 1][yPos + 1]!!.squareImageToShow)) {
+            if (!isNumberOrMineSquare(mFieldObjects[xPos - 1][yPos + 1]?.squareImageToShow)) {
                 unCoverEmptySquares(xPos - 1, yPos + 1)
             }
         }
-        if (yPos - 1 >= 0 && mFieldObjects[xPos][yPos - 1]!!.squareImageToShow != MINE &&
-                mFieldObjects[xPos][yPos - 1]!!.isCovered) { //Top position
+        if (yPos - 1 >= 0 && mFieldObjects[xPos][yPos - 1]?.squareImageToShow != MINE &&
+            mFieldObjects[xPos][yPos - 1]?.isCovered == true) { //Top position
             unCoverSquare(xPos, yPos - 1)
-            if (!isNumberOrMineSquare(mFieldObjects[xPos][yPos - 1]!!.squareImageToShow)) {
+            if (!isNumberOrMineSquare(mFieldObjects[xPos][yPos - 1]?.squareImageToShow)) {
                 unCoverEmptySquares(xPos, yPos - 1)
             }
         }
-        if (xPos + 1 < HORIZONTAL_SIZE && yPos - 1 >= 0 && mFieldObjects[xPos + 1][yPos - 1]!!.squareImageToShow != MINE &&
-                mFieldObjects[xPos + 1][yPos - 1]!!.isCovered) { //Top End position
+        if (xPos + 1 < mHorizontalSize && yPos - 1 >= 0 && mFieldObjects[xPos + 1][yPos - 1]?.squareImageToShow != MINE &&
+            mFieldObjects[xPos + 1][yPos - 1]?.isCovered == true) { //Top End position
             unCoverSquare(xPos + 1, yPos - 1)
-            if (!isNumberOrMineSquare(mFieldObjects[xPos + 1][yPos - 1]!!.squareImageToShow)) {
+            if (!isNumberOrMineSquare(mFieldObjects[xPos + 1][yPos - 1]?.squareImageToShow)) {
                 unCoverEmptySquares(xPos + 1, yPos - 1)
             }
         }
-        if (xPos + 1 < HORIZONTAL_SIZE && mFieldObjects[xPos + 1][yPos]!!.squareImageToShow != MINE &&
-                mFieldObjects[xPos + 1][yPos]!!.isCovered) { //End position
+        if (xPos + 1 < mHorizontalSize && mFieldObjects[xPos + 1][yPos]?.squareImageToShow != MINE &&
+            mFieldObjects[xPos + 1][yPos]?.isCovered == true) { //End position
             unCoverSquare(xPos + 1, yPos)
-            if (!isNumberOrMineSquare(mFieldObjects[xPos + 1][yPos]!!.squareImageToShow)) {
+            if (!isNumberOrMineSquare(mFieldObjects[xPos + 1][yPos]?.squareImageToShow)) {
                 unCoverEmptySquares(xPos + 1, yPos)
             }
         }
-        if (xPos + 1 < HORIZONTAL_SIZE && yPos + 1 < VERTICAL_SIZE && mFieldObjects[xPos + 1][yPos + 1]!!.squareImageToShow != MINE &&
-                mFieldObjects[xPos + 1][yPos + 1]!!.isCovered) { //End Bottom position
+        if (xPos + 1 < mHorizontalSize && yPos + 1 < mVerticalSize && mFieldObjects[xPos + 1][yPos + 1]?.squareImageToShow != MINE &&
+            mFieldObjects[xPos + 1][yPos + 1]?.isCovered == true) { //End Bottom position
             unCoverSquare(xPos + 1, yPos + 1)
-            if (!isNumberOrMineSquare(mFieldObjects[xPos + 1][yPos + 1]!!.squareImageToShow)) {
+            if (!isNumberOrMineSquare(mFieldObjects[xPos + 1][yPos + 1]?.squareImageToShow)) {
                 unCoverEmptySquares(xPos + 1, yPos + 1)
             }
         }
-        if (yPos + 1 < VERTICAL_SIZE && mFieldObjects[xPos][yPos + 1]!!.squareImageToShow != MINE &&
-                mFieldObjects[xPos][yPos + 1]!!.isCovered) { //Bottom position
+        if (yPos + 1 < mVerticalSize && mFieldObjects[xPos][yPos + 1]?.squareImageToShow != MINE &&
+            mFieldObjects[xPos][yPos + 1]?.isCovered == true) { //Bottom position
             unCoverSquare(xPos, yPos + 1)
-            if (!isNumberOrMineSquare(mFieldObjects[xPos][yPos + 1]!!.squareImageToShow)) {
+            if (!isNumberOrMineSquare(mFieldObjects[xPos][yPos + 1]?.squareImageToShow)) {
                 unCoverEmptySquares(xPos, yPos + 1)
             }
         }
     }
 
-    private fun isNumberOrMineSquare(imageToShow: Int): Boolean {
+    private fun isNumberOrMineSquare(imageToShow: Int?): Boolean {
         return when (imageToShow) {
-            MINE -> true
-            ONE -> true
-            TWO -> true
-            THREE -> true
-            FOUR -> true
-            FIVE -> true
-            SIX -> true
-            SEVEN -> true
+            MINE,
+            ONE,
+            TWO,
+            THREE,
+            FOUR,
+            FIVE,
+            SIX,
+            SEVEN,
             EIGHT -> true
             else -> false
         }
     }
 
     private fun unCoverSquare(x: Int, y: Int) {
-        mFieldObjects[x][y]!!.isCovered = false
-        (mFieldObjects[x][y]!!.squareView?.findViewById<View>(R.id.image_button) as ImageView).setImageDrawable(ResourcesCompat.getDrawable(resources, getResourceId(x, y), null))
+        mFieldObjects[x][y]?.isCovered = false
+        (mFieldObjects[x][y]?.squareView?.findViewById<View>(R.id.image_button) as ImageView).setImageDrawable(ResourcesCompat.getDrawable(resources, getResourceId(x, y), null))
     }
 
     private fun getResourceId(x: Int, y: Int): Int {
-        val resourceId = when (mFieldObjects[x][y]!!.squareImageToShow) {
+        val resourceId = when (mFieldObjects[x][y]?.squareImageToShow) {
             MINE -> R.drawable.mine
             ONE -> R.drawable.one
             TWO -> R.drawable.two
@@ -247,15 +279,15 @@ class MineFieldActivity : AppCompatActivity() {
     }
 
     private fun initMineField() {
-        mMineFiled!!.columnCount = HORIZONTAL_SIZE
-        mMineFiled!!.orientation = GridLayout.HORIZONTAL
-        for (j in 0 until VERTICAL_SIZE) {
-            for (i in 0 until HORIZONTAL_SIZE) {
+        mMineFiled?.columnCount = mHorizontalSize
+        mMineFiled?.orientation = GridLayout.HORIZONTAL
+        for (j in 0 until mVerticalSize) {
+            for (i in 0 until mHorizontalSize) {
                 val squareView = layoutInflater.inflate(R.layout.square_layout, null)
                 val imageView = squareView.findViewById<ImageView>(R.id.image_button)
                 imageView.setImageDrawable(ResourcesCompat.getDrawable(resources, R.drawable.covered, null))
-                mFieldObjects[i][j]!!.squareView = squareView
-                mMineFiled!!.addView(squareView)
+                mFieldObjects[i][j]?.squareView = squareView
+                mMineFiled?.addView(squareView)
                 setOnClickListener(i, j, mFieldObjects[i][j], imageView, getResourceId(i, j))
                 setOnLongClickListener(mFieldObjects[i][j], imageView)
             }
@@ -263,25 +295,23 @@ class MineFieldActivity : AppCompatActivity() {
     }
 
     private fun setOnClickListener(xPos: Int, yPos: Int, fieldObject: FieldObject?, imageView: ImageView, resourceId: Int) {
-        fieldObject!!.squareView?.setOnClickListener(View.OnClickListener {
+        fieldObject?.squareView?.setOnClickListener(View.OnClickListener {
             if (resourceId == R.drawable.uncovered) {
                 setFaceImage(FaceType.SCARED, true)
                 unCoverEmptySquares(xPos, yPos)
             } else if (resourceId == R.drawable.mine) {
                 setFaceImage(FaceType.KILLED, false)
                 uncoverAllSquares()
-                gameChronometerView?.stopTimer()
+                mGameChronometerView?.stopTimer()
                 return@OnClickListener
             }
             imageView.setImageDrawable(ResourcesCompat.getDrawable(resources, resourceId, null))
-            if (gameChronometerView?.mTimerStarted == false) {
-                gameChronometerView?.startTimer()
-            }
+            mGameChronometerView?.startTimer()
         })
     }
 
     private fun setOnLongClickListener(fieldObject: FieldObject?, imageView: ImageView) {
-        fieldObject!!.squareView?.setOnLongClickListener(OnLongClickListener {
+        fieldObject?.squareView?.setOnLongClickListener(OnLongClickListener {
             if (fieldObject.isFlagged) {
                 Log.i(TAG, "Square unflagged")
                 setFaceImage(FaceType.ANGRY, true)
@@ -302,8 +332,8 @@ class MineFieldActivity : AppCompatActivity() {
                     if (mMinesFound == mDefaultNumberOfMines) {
                         Log.i(TAG, "You won!$mMinesFound")
                         setFaceImage(FaceType.HAPPY, false)
-                        showFinishedGamePopupWindowClick(mMineFiled!!.rootView)
-                        gameChronometerView?.stopTimer()
+                        showFinishedGamePopupWindowClick(mMineFiled?.rootView)
+                        mGameChronometerView?.stopTimer()
                         return@OnLongClickListener true
                     }
                     imageView.setImageDrawable(ResourcesCompat.getDrawable(resources, R.drawable.flaged, null))
@@ -316,14 +346,14 @@ class MineFieldActivity : AppCompatActivity() {
     }
 
     private fun uncoverAllSquares() {
-        for (j in 0 until VERTICAL_SIZE) {
-            for (i in 0 until HORIZONTAL_SIZE) {
+        for (j in 0 until mVerticalSize) {
+            for (i in 0 until mHorizontalSize) {
                 unCoverSquare(i, j)
-                mFieldObjects[i][j]!!.squareView?.setOnClickListener(null)
-                mFieldObjects[i][j]!!.squareView?.setOnLongClickListener(null)
+                mFieldObjects[i][j]?.squareView?.setOnClickListener(null)
+                mFieldObjects[i][j]?.squareView?.setOnLongClickListener(null)
             }
         }
-        mMineFiled!!.isClickable = false
+        mMineFiled?.isClickable = false
     }
 
     private fun setFaceImage(faceType: FaceType, keepSmiling: Boolean) {
@@ -334,9 +364,9 @@ class MineFieldActivity : AppCompatActivity() {
             FaceType.SCARED -> R.drawable.scared
             FaceType.SMILE -> R.drawable.smile
         }
-        mFace!!.setImageDrawable(ResourcesCompat.getDrawable(resources, resource, null))
+        mFace?.setImageDrawable(ResourcesCompat.getDrawable(resources, resource, null))
         if (keepSmiling) {
-            Handler().postDelayed({ mFace!!.setImageDrawable(ResourcesCompat.getDrawable(resources, R.drawable.smile, null)) }, 500)
+            Handler().postDelayed({ mFace?.setImageDrawable(ResourcesCompat.getDrawable(resources, R.drawable.smile, null)) }, 500)
         }
     }
 
@@ -355,6 +385,7 @@ class MineFieldActivity : AppCompatActivity() {
         }
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     private fun showSettingsPopupWindowClick(view: View?) {
         val inflater = getSystemService(LAYOUT_INFLATER_SERVICE) as LayoutInflater
         val popupView = inflater.inflate(R.layout.popup_windows_settings_layout, null)
@@ -371,12 +402,13 @@ class MineFieldActivity : AppCompatActivity() {
         medium.setOnClickListener { dismissSettingsPopupWindow(popupWindow, Constants.Difficulty.MEDIUM, true) }
         difficult.setOnClickListener { dismissSettingsPopupWindow(popupWindow, Constants.Difficulty.HARD, true) }
         cancel.setOnClickListener { dismissSettingsPopupWindow(popupWindow, Constants.Difficulty.EASY, false) }
-        popupView.setOnTouchListener { _, _ ->
+        popupView?.setOnTouchListener { _, _ ->
             dismissSettingsPopupWindow(popupWindow, Constants.Difficulty.EASY, false)
             true
         }
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     private fun showFinishedGamePopupWindowClick(view: View?) {
         val inflater = getSystemService(LAYOUT_INFLATER_SERVICE) as LayoutInflater
         val popupView = inflater.inflate(R.layout.popup_windows_finished_game_layout, null)
@@ -386,7 +418,7 @@ class MineFieldActivity : AppCompatActivity() {
         val height = LinearLayout.LayoutParams.WRAP_CONTENT
         val popupWindow = PopupWindow(popupView, width, height, true)
         popupWindow.elevation = 5.0f
-        val timeOfDay = gameChronometerView?.mChronometerTime?.toLong() ?: { 0 }
+        val timeOfDay = mGameChronometerView?.mChronometerTime?.toLong() ?: { 0 }
         val time = timeOfDay.toString()
         finishTime.text = resources.getString(R.string.your_time_was, time)
         popupWindow.showAtLocation(view, Gravity.CENTER, 0, 0)
@@ -395,9 +427,5 @@ class MineFieldActivity : AppCompatActivity() {
             dismissSettingsPopupWindow(popupWindow, mDifficulty, true)
             true
         }
-    }
-
-    companion object {
-        private const val TAG = "MineFieldActivity"
     }
 }
