@@ -47,6 +47,9 @@ class GameChronometerView: ConstraintLayout {
     }
 
     fun startTimer() {
+        if (mTimerStarted) {
+            return
+        }
         mTimerStarted = true
         val tensMinutesImageView = findViewById<ImageView>(R.id.tens_minutes)
         val unitsMinutesImageView = findViewById<ImageView>(R.id.units_minutes)
@@ -91,6 +94,10 @@ class GameChronometerView: ConstraintLayout {
     }
 
     fun stopTimer() {
+        if (!mTimerStarted) {
+            return
+        }
+        mTimerStarted = false
         if (mCountDownTimer != null) {
             mCountDownTimer!!.cancel()
         }
