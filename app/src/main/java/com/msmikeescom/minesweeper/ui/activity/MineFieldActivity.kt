@@ -1,41 +1,36 @@
 package com.msmikeescom.minesweeper.ui.activity
 
-import android.annotation.SuppressLint
 import android.os.Bundle
 import android.os.Handler
 import android.util.DisplayMetrics
 import android.util.Log
-import android.view.Gravity
-import android.view.LayoutInflater
+import android.util.TypedValue
 import android.view.View
 import android.view.View.OnLongClickListener
 import android.widget.*
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.res.ResourcesCompat
-import androidx.lifecycle.ViewModelProvider
-import com.google.android.gms.auth.api.signin.GoogleSignInAccount
+import com.bumptech.glide.Glide
 import com.msmikeescom.minesweeper.R
 import com.msmikeescom.minesweeper.model.FieldObject
 import com.msmikeescom.minesweeper.ui.view.GameChronometerView
 import com.msmikeescom.minesweeper.ui.view.MinesCounterView
-import com.msmikeescom.minesweeper.utilities.Constants
+import com.msmikeescom.minesweeper.utilities.AlertDialogUtil
+import com.msmikeescom.minesweeper.utilities.Constants.DEFAULT_LEVEL_NUMBER_MINES
 import com.msmikeescom.minesweeper.utilities.Constants.EIGHT
 import com.msmikeescom.minesweeper.utilities.Constants.EMPTY
-import com.msmikeescom.minesweeper.utilities.Constants.SQUARE_SIZE
 import com.msmikeescom.minesweeper.utilities.Constants.FIVE
 import com.msmikeescom.minesweeper.utilities.Constants.FOUR
-import com.msmikeescom.minesweeper.utilities.Constants.GOOGLE_SIGN_IN_ACCOUNT
 import com.msmikeescom.minesweeper.utilities.Constants.MINE
 import com.msmikeescom.minesweeper.utilities.Constants.ONE
 import com.msmikeescom.minesweeper.utilities.Constants.SEVEN
 import com.msmikeescom.minesweeper.utilities.Constants.SIX
+import com.msmikeescom.minesweeper.utilities.Constants.SQUARE_SIZE
 import com.msmikeescom.minesweeper.utilities.Constants.THREE
 import com.msmikeescom.minesweeper.utilities.Constants.TWO
-import com.msmikeescom.minesweeper.viewmodel.MineFieldViewModel
-import java.util.Random
+import java.util.*
 
 
-class MineFieldActivity : AppCompatActivity() {
+class MineFieldActivity : BaseActivity() {
 
     companion object {
         private const val TAG = "MineFieldActivity"
@@ -45,11 +40,6 @@ class MineFieldActivity : AppCompatActivity() {
         ANGRY, HAPPY, KILLED, SCARED, SMILE
     }
 
-    private lateinit var viewModel: MineFieldViewModel
-
-    private var mGoogleSignInAccount: GoogleSignInAccount? = null
-
-    private var mDifficulty: Constants.Difficulty = Constants.Difficulty.EASY
     private var mMinesFound = 0
     private var mDefaultNumberOfMines = 0
     private var mCounterNumberOfMines = 0
@@ -58,71 +48,72 @@ class MineFieldActivity : AppCompatActivity() {
 
     private var mFieldObjects = emptyArray<Array<FieldObject?>>()
 
-    private var mGameChronometerView: GameChronometerView? = null
-    private var minesCounterView: MinesCounterView? = null
-    private var mMineFiled: GridLayout? = null
-    private var mFace: ImageView? = null
-    private var mSettings: ImageView? = null
+    private lateinit var mGameChronometerView: GameChronometerView
+    private lateinit var minesCounterView: MinesCounterView
+    private lateinit var mMineFiled: GridLayout
+    private lateinit var mFace: ImageView
+    private lateinit var mUserPhoto: ImageView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_mine_field)
+        initLayout(R.layout.activity_mine_field, "MINE FILED", "", false)
 
-        mGoogleSignInAccount = intent?.getParcelableExtra(GOOGLE_SIGN_IN_ACCOUNT)
+        initView()
 
-        viewModel = ViewModelProvider(this)[MineFieldViewModel::class.java].also {
-            it.initViewModel(this, mGoogleSignInAccount)
-        }
-
-        viewModel.isViewModelInitialized.observe(this) { isInitialized ->
-            if (isInitialized) {
-                viewModel.loadUserInfo()
+        mainViewModel.userInfo.observe(this) { userInfo ->
+            userInfo?.photoUrl.let { photoUrl ->
+                Glide.with(this)
+                    .load(photoUrl)
+                    .circleCrop()
+                    .into(mUserPhoto)
             }
-        }
-
-        viewModel.userInfo.observe(this) { userInfo ->
-            userInfo?.let {
-                mDefaultNumberOfMines = mDifficulty.numberOfMines
-                mCounterNumberOfMines = mDifficulty.numberOfMines
-
-                setMineFieldSize()
-                initFieldObjectsArray()
-                buildMineFiled()
-                initView()
-                initMineField()
-            }
-        }
-
-        viewModel.unCoverSquare.observe(this) {
-            unCoverSquare(it.first, it.second)
+            initGame()
         }
     }
 
-    private fun initView() {
-        mGameChronometerView = findViewById(R.id.chronometer)
-        minesCounterView = findViewById(R.id.mines_counter)
-        mMineFiled = findViewById(R.id.mine_field)
-        mMineFiled?.removeAllViews()
-        mFace = findViewById(R.id.face)
-        setFaceImage(FaceType.HAPPY, true)
-        mFace?.setOnClickListener { viewModel.loadUserInfo() }
-        mSettings = findViewById(R.id.settings)
-        mSettings?.setOnClickListener { showSettingsPopupWindowClick(mMineFiled?.rootView) }
-        minesCounterView?.updateCounter(mCounterNumberOfMines)
+    private fun initGame() {
+        setNumberOfMines()
+        setMineFieldSize()
+        initFieldObjectsArray()
+        buildMineFiled()
+        initMineField()
+    }
+
+    private fun setNumberOfMines() {
+        mainViewModel.userInfo.value?.let { userInfoItem ->
+            mDefaultNumberOfMines = userInfoItem.numberOfMines.takeIf { it > 0 } ?: kotlin.run { DEFAULT_LEVEL_NUMBER_MINES }
+            mCounterNumberOfMines = mDefaultNumberOfMines
+        } ?: kotlin.run {
+            mDefaultNumberOfMines = DEFAULT_LEVEL_NUMBER_MINES
+            mCounterNumberOfMines = DEFAULT_LEVEL_NUMBER_MINES
+        }
+        mainViewModel.updateNumberOfMines(mDefaultNumberOfMines)
+        minesCounterView.updateCounter(mCounterNumberOfMines)
     }
 
     private fun setMineFieldSize() {
+        // Calculate ActionBar height
+        val tv = TypedValue()
+        val actionBarHeight = if (theme.resolveAttribute(android.R.attr.actionBarSize, tv, true)) {
+             TypedValue.complexToDimensionPixelSize(tv.data, resources.displayMetrics)
+        } else 0
+        Log.d(TAG, "ActionBar height: $actionBarHeight")
+
+        // Calculate screen width and height
         val displayMetrics = DisplayMetrics()
         windowManager.defaultDisplay.getMetrics(displayMetrics)
-        val height = displayMetrics.heightPixels
-        val width = displayMetrics.widthPixels
-        val mineFieldHeight = height / SQUARE_SIZE
-        val mineFieldWidth = width / SQUARE_SIZE
+        val screenHeight = displayMetrics.heightPixels
+        val screenWidth = displayMetrics.widthPixels
+
+        // Calculate mine filed width and height
+        val mineFieldHeight = ((screenHeight - actionBarHeight) / SQUARE_SIZE)
+        val mineFieldWidth = screenWidth / SQUARE_SIZE
         mVerticalSize = mineFieldHeight
         mHorizontalSize = mineFieldWidth
-        Log.d(TAG, "Screen Size (height = $height, width = $width)")
+        mainViewModel.updateFieldSize(mineFieldHeight * mineFieldWidth)
+        Log.d(TAG, "Screen Size (height = $screenHeight, width = $screenWidth)")
         Log.d(TAG, "Mine Filed Size (height = $mineFieldHeight, width = $mineFieldWidth)")
-        mFieldObjects = Array(mHorizontalSize) { arrayOfNulls<FieldObject>(mVerticalSize) }
+        mFieldObjects = Array(mHorizontalSize) { arrayOfNulls(mVerticalSize) }
     }
 
     private fun initFieldObjectsArray() {
@@ -148,6 +139,19 @@ class MineFieldActivity : AppCompatActivity() {
             }
         }
         setUpFieldNumbers()
+    }
+
+    private fun initView() {
+        mGameChronometerView = findViewById(R.id.chronometer)
+        minesCounterView = findViewById(R.id.mines_counter)
+        mMineFiled = findViewById(R.id.mine_field)
+        mMineFiled.removeAllViews()
+        mFace = findViewById(R.id.face)
+        mUserPhoto = findViewById(R.id.user_photo)
+        setFaceImage(FaceType.HAPPY, true)
+        mFace.setOnClickListener {
+            //TODO
+        }
     }
 
     private fun setUpFieldNumbers() {
@@ -279,15 +283,15 @@ class MineFieldActivity : AppCompatActivity() {
     }
 
     private fun initMineField() {
-        mMineFiled?.columnCount = mHorizontalSize
-        mMineFiled?.orientation = GridLayout.HORIZONTAL
+        mMineFiled.columnCount = mHorizontalSize
+        mMineFiled.orientation = GridLayout.HORIZONTAL
         for (j in 0 until mVerticalSize) {
             for (i in 0 until mHorizontalSize) {
                 val squareView = layoutInflater.inflate(R.layout.square_layout, null)
                 val imageView = squareView.findViewById<ImageView>(R.id.image_button)
                 imageView.setImageDrawable(ResourcesCompat.getDrawable(resources, R.drawable.covered, null))
                 mFieldObjects[i][j]?.squareView = squareView
-                mMineFiled?.addView(squareView)
+                mMineFiled.addView(squareView)
                 setOnClickListener(i, j, mFieldObjects[i][j], imageView, getResourceId(i, j))
                 setOnLongClickListener(mFieldObjects[i][j], imageView)
             }
@@ -302,23 +306,25 @@ class MineFieldActivity : AppCompatActivity() {
             } else if (resourceId == R.drawable.mine) {
                 setFaceImage(FaceType.KILLED, false)
                 uncoverAllSquares()
-                mGameChronometerView?.stopTimer()
+                mGameChronometerView.stopTimer()
+                showLoseMessageDialog()
                 return@OnClickListener
             }
             imageView.setImageDrawable(ResourcesCompat.getDrawable(resources, resourceId, null))
-            mGameChronometerView?.startTimer()
+            mGameChronometerView.startTimer()
         })
     }
 
     private fun setOnLongClickListener(fieldObject: FieldObject?, imageView: ImageView) {
         fieldObject?.squareView?.setOnLongClickListener(OnLongClickListener {
+            Log.i(TAG, "CounterNumberOfMines: $mCounterNumberOfMines")
             if (fieldObject.isFlagged) {
                 Log.i(TAG, "Square unflagged")
                 setFaceImage(FaceType.ANGRY, true)
                 mCounterNumberOfMines++
                 imageView.setImageDrawable(ResourcesCompat.getDrawable(resources, R.drawable.covered, null))
                 fieldObject.isFlagged = false
-                minesCounterView?.updateCounter(mCounterNumberOfMines)
+                minesCounterView.updateCounter(mCounterNumberOfMines)
                 return@OnLongClickListener true
             }
             if (fieldObject.isCovered) {
@@ -332,17 +338,47 @@ class MineFieldActivity : AppCompatActivity() {
                     if (mMinesFound == mDefaultNumberOfMines) {
                         Log.i(TAG, "You won!$mMinesFound")
                         setFaceImage(FaceType.HAPPY, false)
-                        showFinishedGamePopupWindowClick(mMineFiled?.rootView)
-                        mGameChronometerView?.stopTimer()
+                        showWinMessageDialog()
+                        mGameChronometerView.stopTimer()
                         return@OnLongClickListener true
                     }
                     imageView.setImageDrawable(ResourcesCompat.getDrawable(resources, R.drawable.flaged, null))
                     fieldObject.isFlagged = true
-                    minesCounterView?.updateCounter(mCounterNumberOfMines)
+                    minesCounterView.updateCounter(mCounterNumberOfMines)
                 }
             }
             true
         })
+    }
+
+    private fun showWinMessageDialog() {
+        AlertDialogUtil.createCustomAlertDialog(this,
+            alertTitle = "You Won!",
+            alertMessage = "You have won!. Do you want to start a new game?",
+            positiveButton =  Pair("Ok") { dialog, _ ->
+                dialog.dismiss()
+                finish()
+                lunchMineField()
+            },
+            negativeButton = Pair("Cancel") { dialog, _ ->
+                dialog.dismiss()
+                finish()
+            })?.show()
+    }
+
+    private fun showLoseMessageDialog() {
+        AlertDialogUtil.createCustomAlertDialog(this,
+            alertTitle = "You Lost!",
+            alertMessage = "You have lost!. Do you want to start a new game?",
+            positiveButton =  Pair("Ok") { dialog, _ ->
+                dialog.dismiss()
+                finish()
+                lunchMineField()
+            },
+            negativeButton = Pair("Cancel") { dialog, _ ->
+                dialog.dismiss()
+                finish()
+            })?.show()
     }
 
     private fun uncoverAllSquares() {
@@ -353,7 +389,7 @@ class MineFieldActivity : AppCompatActivity() {
                 mFieldObjects[i][j]?.squareView?.setOnLongClickListener(null)
             }
         }
-        mMineFiled?.isClickable = false
+        mMineFiled.isClickable = false
     }
 
     private fun setFaceImage(faceType: FaceType, keepSmiling: Boolean) {
@@ -364,68 +400,10 @@ class MineFieldActivity : AppCompatActivity() {
             FaceType.SCARED -> R.drawable.scared
             FaceType.SMILE -> R.drawable.smile
         }
-        mFace?.setImageDrawable(ResourcesCompat.getDrawable(resources, resource, null))
+        mFace.setImageDrawable(ResourcesCompat.getDrawable(resources, resource, null))
         if (keepSmiling) {
-            Handler().postDelayed({ mFace?.setImageDrawable(ResourcesCompat.getDrawable(resources, R.drawable.smile, null)) }, 500)
+            Handler().postDelayed({ mFace.setImageDrawable(ResourcesCompat.getDrawable(resources, R.drawable.smile, null)) }, 500)
         }
     }
 
-    private fun dismissSettingsPopupWindow(popupWindow: PopupWindow, difficulty: Constants.Difficulty, updateDifficulty: Boolean) {
-        var toastText = ""
-        popupWindow.dismiss()
-        if (updateDifficulty) {
-            this.mDifficulty = difficulty
-            recreate()
-            when (difficulty) {
-                Constants.Difficulty.EASY -> toastText = "Easy level"
-                Constants.Difficulty.MEDIUM -> toastText = "Medium level"
-                Constants.Difficulty.HARD -> toastText = "Hard level"
-            }
-            Toast.makeText(this, toastText, Toast.LENGTH_LONG).show()
-        }
-    }
-
-    @SuppressLint("ClickableViewAccessibility")
-    private fun showSettingsPopupWindowClick(view: View?) {
-        val inflater = getSystemService(LAYOUT_INFLATER_SERVICE) as LayoutInflater
-        val popupView = inflater.inflate(R.layout.popup_windows_settings_layout, null)
-        val easy = popupView.findViewById<ImageView>(R.id.easy)
-        val medium = popupView.findViewById<ImageView>(R.id.medium)
-        val difficult = popupView.findViewById<ImageView>(R.id.difficult)
-        val cancel = popupView.findViewById<Button>(R.id.cancel)
-        val width = LinearLayout.LayoutParams.MATCH_PARENT
-        val height = LinearLayout.LayoutParams.WRAP_CONTENT
-        val popupWindow = PopupWindow(popupView, width, height, true)
-        popupWindow.elevation = 5.0f
-        popupWindow.showAtLocation(view, Gravity.CENTER, 0, 0)
-        easy.setOnClickListener { dismissSettingsPopupWindow(popupWindow, Constants.Difficulty.EASY, true) }
-        medium.setOnClickListener { dismissSettingsPopupWindow(popupWindow, Constants.Difficulty.MEDIUM, true) }
-        difficult.setOnClickListener { dismissSettingsPopupWindow(popupWindow, Constants.Difficulty.HARD, true) }
-        cancel.setOnClickListener { dismissSettingsPopupWindow(popupWindow, Constants.Difficulty.EASY, false) }
-        popupView?.setOnTouchListener { _, _ ->
-            dismissSettingsPopupWindow(popupWindow, Constants.Difficulty.EASY, false)
-            true
-        }
-    }
-
-    @SuppressLint("ClickableViewAccessibility")
-    private fun showFinishedGamePopupWindowClick(view: View?) {
-        val inflater = getSystemService(LAYOUT_INFLATER_SERVICE) as LayoutInflater
-        val popupView = inflater.inflate(R.layout.popup_windows_finished_game_layout, null)
-        val playAgain = popupView.findViewById<Button>(R.id.play_again)
-        val finishTime = popupView.findViewById<TextView>(R.id.finish_time)
-        val width = LinearLayout.LayoutParams.MATCH_PARENT
-        val height = LinearLayout.LayoutParams.WRAP_CONTENT
-        val popupWindow = PopupWindow(popupView, width, height, true)
-        popupWindow.elevation = 5.0f
-        val timeOfDay = mGameChronometerView?.mChronometerTime?.toLong() ?: { 0 }
-        val time = timeOfDay.toString()
-        finishTime.text = resources.getString(R.string.your_time_was, time)
-        popupWindow.showAtLocation(view, Gravity.CENTER, 0, 0)
-        playAgain.setOnClickListener { dismissSettingsPopupWindow(popupWindow, mDifficulty, true) }
-        popupView.setOnTouchListener { _, _ ->
-            dismissSettingsPopupWindow(popupWindow, mDifficulty, true)
-            true
-        }
-    }
 }

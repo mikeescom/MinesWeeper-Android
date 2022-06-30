@@ -15,30 +15,27 @@
         android:orientation="horizontal"
         android:padding="6dp"
         android:background="@color/digital_color_bg">
-        <!--COUNTER-->
         <com.msmikeescom.minesweeper.ui.view.MinesCounterView
             android:id="@+id/mines_counter"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1.2"/>
         <ImageView
-            android:id="@+id/settings"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:src="@drawable/settings"/>
-        <ImageView
             android:id="@+id/face"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:src="@drawable/smile"/>
-        <!--CHRONOMETER-->
         <com.msmikeescom.minesweeper.ui.view.GameChronometerView
             android:id="@+id/chronometer"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1.8"/>
+        <ImageView
+            android:id="@+id/user_photo"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="0.6"/>
      </LinearLayout>
 
     <ScrollView
@@ -47,10 +44,11 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:gravity="center"
             android:orientation="vertical">
             <GridLayout
                 android:id="@+id/mine_field"
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="10dp"/>
         </LinearLayout>

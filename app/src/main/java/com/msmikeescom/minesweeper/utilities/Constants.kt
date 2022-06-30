@@ -1,10 +1,10 @@
 package com.msmikeescom.minesweeper.utilities
 
 object Constants {
-    const val GOOGLE_SIGN_IN_ACCOUNT = "GOOGLE_SIGN_IN_ACCOUNT"
-    const val EASY_LEVEL_NUMBER_MINES = 36
-    const val MEDIUM_LEVEL_NUMBER_MINES = 51
-    const val HARD_LEVEL_NUMBER_MINES = 66
+
+    const val RESULT_SETTINGS_SAVED = 11
+    const val RESULT_SETTINGS_NOT_SAVED = 12
+    const val DEFAULT_LEVEL_NUMBER_MINES = 15
     const val EMPTY = 0
     const val MINE = 9
     const val ONE = 1
@@ -17,7 +17,7 @@ object Constants {
     const val EIGHT = 8
     const val SQUARE_SIZE = 90
 
-    enum class Difficulty(val numberOfMines: Int) {
-        EASY(EASY_LEVEL_NUMBER_MINES), MEDIUM(MEDIUM_LEVEL_NUMBER_MINES), HARD(HARD_LEVEL_NUMBER_MINES)
-    }
+    const val RC_SIGN_IN = 1
+    const val RC_SIGN_OUT = 2
+
 }

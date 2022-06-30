@@ -1,9 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">#008577</color>
-    <color name="colorPrimaryDark">#00574B</color>
-    <color name="colorAccent">#D81B60</color>
-    <color name="digital_color_bg">#333333</color>
-    <color name="settings_color_bg">#DD888888</color>
-    <color name="splash_color_bg">#DD333333</color>
+    <color name="colorPrimary">#1363DF</color>
+    <color name="colorPrimaryDark">#06283D</color>
+    <color name="splash_color_bg">#06283D</color>
+    <color name="colorAccent">#47B5FF</color>
+    <color name="digital_color_bg">#06283D</color>
+    <color name="settings_color_bg">#06283D</color>
+    <color name="text_color">#DFF6FF</color>
+    <color name="sub_text_color">#A5BECC</color>
+    <color name="edit_text_error">#F85454</color>
+    <color name="edit_text_background">#3b3b3b</color>
 </resources>

@@ -10,5 +10,6 @@ open class UserInfoItem (
     @ColumnInfo(name = "displayName") val displayName: String? = null,
     @ColumnInfo(name = "email") val email: String? = null,
     @ColumnInfo(name = "photoUrl") val photoUrl: String? = null,
-    @ColumnInfo(name = "difficulty") val difficulty: String? = null
+    @ColumnInfo(name = "fieldSize") val fieldSize: Int,
+    @ColumnInfo(name = "numberOfMines") val numberOfMines: Int
 )

@@ -12,18 +12,6 @@ import org.slf4j.LoggerFactory
 abstract class MinesWeeperDatabase : RoomDatabase() {
     abstract fun userInfoDAO(): UserInfoDAO
 
-    fun deleteAll() {
-        userInfoDAO().deleteAll()
-    }
-
-    fun insertItem(userInfoItem: UserInfoItem) {
-        userInfoDAO().insertItem(userInfoItem)
-    }
-
-    fun getUserInfo(userId: String): UserInfoItem? {
-        return userInfoDAO().getUserInfo(userId)
-    }
-
     companion object {
         private val LOGGER = LoggerFactory.getLogger("MinesWeeperDatabase")
         private const val DATABASE_NAME = "minesweeperdatabase"

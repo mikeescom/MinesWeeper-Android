@@ -21,4 +21,27 @@
         <item name="android:windowBackground">@drawable/splash_bg</item>
     </style>
 
+    <style name="Preference.DialogPreference.EditTextPreference" parent="AppTheme.NoActionBar">
+        <item name="android:textColor">@color/text_color</item>
+        <item name="titleTextColor">@color/colorPrimary</item>
+        <item name="android:subtitleTextColor">@color/sub_text_color</item>
+    </style>
+
+    <style name="AlertDialogTheme" parent="Theme.AppCompat.Light.Dialog.Alert">
+        <item name="colorAccent">@color/colorPrimary</item>
+        <item name="android:textColorPrimary">@color/colorAccent</item>
+        <item name="android:textColor">@color/colorAccent</item>
+        <item name="android:textColorSecondary">@color/sub_text_color</item>
+        <item name="android:textColorAlertDialogListItem">@color/text_color</item>
+        <item name="android:background">@color/colorPrimary</item>
+    </style>
+
+    <style name="GenericButton">
+        <item name="android:textSize">18dp</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:background">@color/colorPrimary</item>
+        <item name="android:textColor">@color/text_color</item>
+        <item name="android:padding">10dp</item>
+    </style>
+
 </resources>

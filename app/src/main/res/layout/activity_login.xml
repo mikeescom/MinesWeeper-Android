@@ -4,8 +4,9 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/digital_color_bg"
     android:padding="20dp"
-    tools:context=".ui.activity.MainActivity">
+    tools:context=".ui.activity.LoginActivity">
 
     <TextView
         android:id="@+id/login_message_text"
@@ -18,7 +19,7 @@
         android:gravity="center_horizontal"
         android:textStyle="bold"
         android:textSize="22dp"
-        android:text="To start, use your Google account to sign in"/>
+        android:text="@string/google_sign_in_message"/>
 
     <com.google.android.gms.common.SignInButton
         android:id="@+id/sign_in_button"

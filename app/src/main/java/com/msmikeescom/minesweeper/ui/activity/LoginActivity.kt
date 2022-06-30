@@ -3,64 +3,64 @@ package com.msmikeescom.minesweeper.ui.activity
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
-import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.ViewModelProvider
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.SignInButton
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.tasks.Task
 import com.msmikeescom.minesweeper.R
-import com.msmikeescom.minesweeper.utilities.Constants.GOOGLE_SIGN_IN_ACCOUNT
+import com.msmikeescom.minesweeper.utilities.Constants.RC_SIGN_IN
+import com.msmikeescom.minesweeper.utilities.Constants.RC_SIGN_OUT
+import com.msmikeescom.minesweeper.viewmodel.MainViewModel
 
-
-class MainActivity : AppCompatActivity() {
+class LoginActivity : BaseActivity() {
 
     companion object {
-        private const val TAG = "MainActivity"
-        private const val RC_SIGN_IN = 1
+        private const val TAG = "LoginActivity"
     }
 
+    private var googleSignInAccount: GoogleSignInAccount? = null
     private lateinit var googleSignInClient: GoogleSignInClient
     private lateinit var signInButton: SignInButton
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
-        getGoogleSignInClient()
-    }
+        initLayout(R.layout.activity_login, null, null, false)
 
-    override fun onStart() {
-        super.onStart()
-        val account = GoogleSignIn.getLastSignedInAccount(this)
-        updateUI(account)
-    }
+        showProgress()
 
-    private fun getGoogleSignInClient() {
-        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-            .requestEmail()
-            .build()
+        mainViewModel = ViewModelProvider(this)[MainViewModel::class.java].also {
+            it.initViewModel(this)
+        }
 
-        googleSignInClient = GoogleSignIn.getClient(this, gso)
-    }
+        googleSignInClient = mainViewModel.getGoogleSignInClient(this)
 
-    private fun updateUI(googleSignInAccount: GoogleSignInAccount?) {
-        googleSignInAccount?.let {
-            loadMineField(googleSignInAccount)
-        } ?: kotlin.run {
+        googleSignInAccount = GoogleSignIn.getLastSignedInAccount(this)
+
+        if (googleSignInAccount == null) {
             initViews()
+        } else {
+            mainViewModel.loadUserInfo(googleSignInAccount)
         }
-    }
 
-    private fun loadMineField(googleSignInAccount: GoogleSignInAccount?) {
-        val intent = Intent(this, MineFieldActivity::class.java).apply {
-            putExtra(GOOGLE_SIGN_IN_ACCOUNT, googleSignInAccount)
+        mainViewModel.userInfo.observe(this) { userInfo ->
+            userInfo?.let {
+                if (it.userId == googleSignInAccount?.id) {
+                    lunchMineField()
+                } else {
+                    mainViewModel.saveUserInfo(googleSignInAccount)
+                }
+            } ?: kotlin.run {
+                mainViewModel.saveUserInfo(googleSignInAccount)
+            }
         }
-        startActivity(intent)
     }
 
     private fun initViews() {
+        Log.d(TAG, "initViews")
+        hideProgress()
         signInButton = findViewById(R.id.sign_in_button)
         signInButton.setOnClickListener {
             signIn()
@@ -80,16 +80,19 @@ class MainActivity : AppCompatActivity() {
                 val task: Task<GoogleSignInAccount> = GoogleSignIn.getSignedInAccountFromIntent(data)
                 handleSignInResult(task)
             }
+            RC_SIGN_OUT -> {
+                hideProgress()
+            }
         }
     }
 
     private fun handleSignInResult(completedTask: Task<GoogleSignInAccount>) {
         try {
             val account = completedTask.getResult(ApiException::class.java)
-            updateUI(account)
+            googleSignInAccount = account
+            mainViewModel.saveUserInfo(account)
         } catch (e: ApiException) {
             Log.w(TAG, "signInResult:failed code=" + e.statusCode)
-            updateUI(null)
         }
     }
 }
