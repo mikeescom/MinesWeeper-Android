@@ -46,4 +46,41 @@ object AlertDialogUtil {
 
         return true
     }
+
+    fun showGameWillBeRestartedDialog(context: Context,
+                                      positiveButtonAction: ((DialogInterface, Int) -> Unit),
+                                      negativeButtonAction: ((DialogInterface, Int) -> Unit)) {
+        createCustomAlertDialog(
+            context = context,
+            alertTitle = "Game Restart",
+            alertMessage = "Do you really want to restart your game?",
+            positiveButton = Pair("Yes", positiveButtonAction),
+            negativeButton = Pair("Cancel", negativeButtonAction)
+        )?.show()
+    }
+
+    fun showWinMessageDialog(context: Context,
+                                     positiveButtonAction: ((DialogInterface, Int) -> Unit),
+                                     negativeButtonAction: ((DialogInterface, Int) -> Unit)) {
+        createCustomAlertDialog(
+            context = context,
+            alertTitle = "You Won!",
+            alertMessage = "You have won!. Do you want to start a new game?",
+            positiveButton = Pair("Yes", positiveButtonAction),
+            negativeButton = Pair("Cancel", negativeButtonAction)
+        )?.show()
+
+    }
+
+    fun showLoseMessageDialog(context: Context,
+                                      positiveButtonAction: ((DialogInterface, Int) -> Unit),
+                                      negativeButtonAction: ((DialogInterface, Int) -> Unit)) {
+        createCustomAlertDialog(
+            context = context,
+            alertTitle = "You Lost!",
+            alertMessage = "You have lost!. Do you want to start a new game?",
+            positiveButton = Pair("Yes", positiveButtonAction),
+            negativeButton = Pair("Cancel", negativeButtonAction)
+        )?.show()
+    }
 }

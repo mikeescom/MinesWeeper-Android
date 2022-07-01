@@ -1,38 +1,41 @@
 package com.msmikeescom.minesweeper.repository
 
-import com.msmikeescom.minesweeper.repository.database.MinesWeeperDatabase
-import com.msmikeescom.minesweeper.repository.database.dto.UserInfoItem
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import com.msmikeescom.minesweeper.repository.local.sharepreferences.MinesWeeperSharedPreferences
 
-class MainRepository(database: MinesWeeperDatabase) {
-    private val userInfoDAO = database.userInfoDAO()
+class MainRepository(sharePreferences: MinesWeeperSharedPreferences) {
+    private val sharePref = sharePreferences
 
-    suspend fun getUserInfo() = withContext(Dispatchers.IO) {
-        userInfoDAO.getUserInfo()
+    fun getUserId() = sharePref.getUserId()
+
+    fun getFieldSize() = sharePref.getFieldSize()
+
+    fun getNumberOfMines() = sharePref.getNumberOfMines()
+
+    fun getUserName() = sharePref.getUserName()
+
+    fun getUserPhotoUrl() = sharePref.getUserPhotoUrl()
+
+    fun saveUserId(userId: String) {
+        sharePref.saveUserId(userId)
     }
 
-    suspend fun insertUser(item: UserInfoItem) {
-        withContext(Dispatchers.IO) {
-            userInfoDAO.insertItem(item)
-        }
+    fun saveFieldSize(fieldSize: Int) {
+        sharePref.saveFieldSize(fieldSize)
     }
 
-    suspend fun updateFieldSize(userId: String, fieldSize: Int) {
-        withContext(Dispatchers.IO) {
-            userInfoDAO.updateFieldSize(userId, fieldSize)
-        }
+    fun saveNumberOfMines(numOfMines: Int) {
+        sharePref.saveNumberOfMines(numOfMines)
     }
 
-    suspend fun updateNumberOfMines(userId: String, numberOfMines: Int) {
-        withContext(Dispatchers.IO) {
-            userInfoDAO.updateNumberOfMines(userId, numberOfMines)
-        }
+    fun saveUserName(userName: String) {
+        sharePref.saveUserName(userName)
     }
 
-    suspend fun deleteUser() {
-        withContext(Dispatchers.IO) {
-            userInfoDAO.deleteAll()
-        }
+    fun saveUserPhotoUrl(userPhotoUrl: String) {
+        sharePref.saveUserPhotoUrl(userPhotoUrl)
+    }
+
+    fun deleteUserInfo() {
+        sharePref.deleteUserInfo()
     }
 }

@@ -5,7 +5,7 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:background="@color/digital_color_bg"
-    tools:context=".ui.activity.MineFieldActivity">
+    tools:context=".ui.fragment.MineFieldFragment">
 
     <LinearLayout
         android:id="@+id/information_layout"
@@ -36,7 +36,7 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="0.6"/>
-     </LinearLayout>
+    </LinearLayout>
 
     <ScrollView
         android:layout_width="match_parent"

@@ -1,40 +1,43 @@
-package com.msmikeescom.minesweeper.ui.activity
+package com.msmikeescom.minesweeper.ui.fragment
 
 import android.os.Bundle
 import android.os.Handler
 import android.util.DisplayMetrics
 import android.util.Log
 import android.util.TypedValue
+import androidx.fragment.app.Fragment
+import android.view.LayoutInflater
 import android.view.View
-import android.view.View.OnLongClickListener
-import android.widget.*
+import android.view.ViewGroup
+import android.widget.GridLayout
+import android.widget.ImageView
 import androidx.core.content.res.ResourcesCompat
+import androidx.lifecycle.ViewModelProvider
+import androidx.navigation.NavOptions
+import androidx.navigation.fragment.findNavController
 import com.bumptech.glide.Glide
 import com.msmikeescom.minesweeper.R
 import com.msmikeescom.minesweeper.model.FieldObject
+import com.msmikeescom.minesweeper.ui.IMainActivityUIListener
+import com.msmikeescom.minesweeper.ui.activity.MainActivity
 import com.msmikeescom.minesweeper.ui.view.GameChronometerView
 import com.msmikeescom.minesweeper.ui.view.MinesCounterView
 import com.msmikeescom.minesweeper.utilities.AlertDialogUtil
-import com.msmikeescom.minesweeper.utilities.Constants.DEFAULT_LEVEL_NUMBER_MINES
-import com.msmikeescom.minesweeper.utilities.Constants.EIGHT
-import com.msmikeescom.minesweeper.utilities.Constants.EMPTY
-import com.msmikeescom.minesweeper.utilities.Constants.FIVE
-import com.msmikeescom.minesweeper.utilities.Constants.FOUR
-import com.msmikeescom.minesweeper.utilities.Constants.MINE
-import com.msmikeescom.minesweeper.utilities.Constants.ONE
-import com.msmikeescom.minesweeper.utilities.Constants.SEVEN
-import com.msmikeescom.minesweeper.utilities.Constants.SIX
+import com.msmikeescom.minesweeper.utilities.Constants
 import com.msmikeescom.minesweeper.utilities.Constants.SQUARE_SIZE
-import com.msmikeescom.minesweeper.utilities.Constants.THREE
-import com.msmikeescom.minesweeper.utilities.Constants.TWO
+import com.msmikeescom.minesweeper.utilities.Constants.TIMER_BAR_SIZE
+import com.msmikeescom.minesweeper.viewmodel.MainViewModel
 import java.util.*
 
-
-class MineFieldActivity : BaseActivity() {
-
+class MineFieldFragment : Fragment() {
     companion object {
-        private const val TAG = "MineFieldActivity"
+        private val TAG = "MineFieldFragment"
     }
+
+    private lateinit var mainViewModel: MainViewModel
+    private lateinit var listener: IMainActivityUIListener
+    private val mainActivity: MainActivity
+        get() = activity as MainActivity
 
     private enum class FaceType {
         ANGRY, HAPPY, KILLED, SCARED, SMILE
@@ -54,21 +57,30 @@ class MineFieldActivity : BaseActivity() {
     private lateinit var mFace: ImageView
     private lateinit var mUserPhoto: ImageView
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        initLayout(R.layout.activity_mine_field, "MINE FILED", "", false)
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+        return inflater.inflate(R.layout.fragment_mine_filed, container, false)
+    }
 
-        initView()
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        mainActivity.setActionBar("MINE FILED", "", false)
+        listener = mainActivity
+        listener.onHideProgress()
 
-        mainViewModel.userInfo.observe(this) { userInfo ->
-            userInfo?.photoUrl.let { photoUrl ->
-                Glide.with(this)
-                    .load(photoUrl)
-                    .circleCrop()
-                    .into(mUserPhoto)
-            }
-            initGame()
+        initView(view)
+
+        mainViewModel = ViewModelProvider(mainActivity)[MainViewModel::class.java].also {
+            it.initViewModel(mainActivity)
         }
+
+        mainViewModel.getUserPhotoUrl()?.let { photoUrl ->
+            Glide.with(this)
+                .load(photoUrl)
+                .circleCrop()
+                .into(mUserPhoto)
+        }
+
+        initGame()
     }
 
     private fun initGame() {
@@ -80,37 +92,45 @@ class MineFieldActivity : BaseActivity() {
     }
 
     private fun setNumberOfMines() {
-        mainViewModel.userInfo.value?.let { userInfoItem ->
-            mDefaultNumberOfMines = userInfoItem.numberOfMines.takeIf { it > 0 } ?: kotlin.run { DEFAULT_LEVEL_NUMBER_MINES }
+        mainViewModel.getNumberOfMines()?.let { numberOfMines ->
+            mDefaultNumberOfMines = numberOfMines.takeIf { it > 0 } ?: kotlin.run { Constants.DEFAULT_LEVEL_NUMBER_MINES }
             mCounterNumberOfMines = mDefaultNumberOfMines
         } ?: kotlin.run {
-            mDefaultNumberOfMines = DEFAULT_LEVEL_NUMBER_MINES
-            mCounterNumberOfMines = DEFAULT_LEVEL_NUMBER_MINES
+            mDefaultNumberOfMines = Constants.DEFAULT_LEVEL_NUMBER_MINES
+            mCounterNumberOfMines = Constants.DEFAULT_LEVEL_NUMBER_MINES
         }
-        mainViewModel.updateNumberOfMines(mDefaultNumberOfMines)
+        mainViewModel.saveNumberOfMines(mDefaultNumberOfMines)
         minesCounterView.updateCounter(mCounterNumberOfMines)
     }
 
     private fun setMineFieldSize() {
         // Calculate ActionBar height
         val tv = TypedValue()
-        val actionBarHeight = if (theme.resolveAttribute(android.R.attr.actionBarSize, tv, true)) {
-             TypedValue.complexToDimensionPixelSize(tv.data, resources.displayMetrics)
+        val actionBarHeight = if (mainActivity.theme.resolveAttribute(android.R.attr.actionBarSize, tv, true)) {
+            TypedValue.complexToDimensionPixelSize(tv.data, resources.displayMetrics)
         } else 0
         Log.d(TAG, "ActionBar height: $actionBarHeight")
 
+        // Calculate timer's bar
+        val timerBarSize = (TIMER_BAR_SIZE * resources.displayMetrics.density).toInt()
+        Log.d(TAG, "Timer bar size: $timerBarSize")
+
+        // Calculate square size
+        val squareSize = (SQUARE_SIZE * resources.displayMetrics.density).toInt()
+        Log.d(TAG, "Square size: $squareSize")
+
         // Calculate screen width and height
         val displayMetrics = DisplayMetrics()
-        windowManager.defaultDisplay.getMetrics(displayMetrics)
+        mainActivity.windowManager.defaultDisplay.getMetrics(displayMetrics)
         val screenHeight = displayMetrics.heightPixels
         val screenWidth = displayMetrics.widthPixels
 
         // Calculate mine filed width and height
-        val mineFieldHeight = ((screenHeight - actionBarHeight) / SQUARE_SIZE)
-        val mineFieldWidth = screenWidth / SQUARE_SIZE
-        mVerticalSize = mineFieldHeight
+        val mineFieldHeight = ((screenHeight - actionBarHeight - timerBarSize) / squareSize)
+        val mineFieldWidth = screenWidth / squareSize
+        mVerticalSize = mineFieldHeight.minus(1)
         mHorizontalSize = mineFieldWidth
-        mainViewModel.updateFieldSize(mineFieldHeight * mineFieldWidth)
+        mainViewModel.saveFieldSize(mineFieldHeight * mineFieldWidth)
         Log.d(TAG, "Screen Size (height = $screenHeight, width = $screenWidth)")
         Log.d(TAG, "Mine Filed Size (height = $mineFieldHeight, width = $mineFieldWidth)")
         mFieldObjects = Array(mHorizontalSize) { arrayOfNulls(mVerticalSize) }
@@ -119,7 +139,7 @@ class MineFieldActivity : BaseActivity() {
     private fun initFieldObjectsArray() {
         for (j in 0 until mVerticalSize) {
             for (i in 0 until mHorizontalSize) {
-                mFieldObjects[i][j] = FieldObject(null, EMPTY)
+                mFieldObjects[i][j] = FieldObject(null, Constants.EMPTY)
             }
         }
     }
@@ -132,8 +152,8 @@ class MineFieldActivity : BaseActivity() {
         while (i < mCounterNumberOfMines) {
             xMinePos = rand.nextInt(mHorizontalSize)
             yMinePos = rand.nextInt(mVerticalSize)
-            if (mFieldObjects[xMinePos][yMinePos]?.squareImageToShow != MINE) {
-                mFieldObjects[xMinePos][yMinePos] = FieldObject(null, MINE)
+            if (mFieldObjects[xMinePos][yMinePos]?.squareImageToShow != Constants.MINE) {
+                mFieldObjects[xMinePos][yMinePos] = FieldObject(null, Constants.MINE)
                 i++
                 Log.d(TAG, "Mine set up at: [$xMinePos, $yMinePos]")
             }
@@ -141,45 +161,58 @@ class MineFieldActivity : BaseActivity() {
         setUpFieldNumbers()
     }
 
-    private fun initView() {
-        mGameChronometerView = findViewById(R.id.chronometer)
-        minesCounterView = findViewById(R.id.mines_counter)
-        mMineFiled = findViewById(R.id.mine_field)
+    private fun initView(view: View) {
+        mGameChronometerView = view.findViewById(R.id.chronometer)
+        minesCounterView = view.findViewById(R.id.mines_counter)
+        mMineFiled = view.findViewById(R.id.mine_field)
         mMineFiled.removeAllViews()
-        mFace = findViewById(R.id.face)
-        mUserPhoto = findViewById(R.id.user_photo)
+        mFace = view.findViewById(R.id.face)
+        mUserPhoto = view.findViewById(R.id.user_photo)
         setFaceImage(FaceType.HAPPY, true)
         mFace.setOnClickListener {
-            //TODO
+            AlertDialogUtil.showGameWillBeRestartedDialog(requireContext(),
+                { dialog, _ ->
+                    dialog.dismiss()
+                    findNavController().navigate(
+                        R.id.mineFiledFragment,
+                        arguments,
+                        NavOptions.Builder()
+                            .setPopUpTo(R.id.mineFiledFragment, true)
+                            .build()
+                    )
+                },
+                { dialog, _ ->
+                    dialog.dismiss()
+                })
         }
     }
 
     private fun setUpFieldNumbers() {
         for (j in 0 until mVerticalSize) {
             for (i in 0 until mHorizontalSize) {
-                if (mFieldObjects[i][j]?.squareImageToShow == MINE) {
-                    if (i - 1 >= 0 && j - 1 >= 0 && mFieldObjects[i - 1][j - 1]?.squareImageToShow != MINE) { //Start Top position
+                if (mFieldObjects[i][j]?.squareImageToShow == Constants.MINE) {
+                    if (i - 1 >= 0 && j - 1 >= 0 && mFieldObjects[i - 1][j - 1]?.squareImageToShow != Constants.MINE) { //Start Top position
                         mFieldObjects[i - 1][j - 1]?.squareImageToShow = mFieldObjects[i - 1][j - 1]?.squareImageToShow?.let { it + 1 } ?: 0
                     }
-                    if (i - 1 >= 0 && mFieldObjects[i - 1][j]?.squareImageToShow != MINE) { //Start position
+                    if (i - 1 >= 0 && mFieldObjects[i - 1][j]?.squareImageToShow != Constants.MINE) { //Start position
                         mFieldObjects[i - 1][j]?.squareImageToShow = mFieldObjects[i - 1][j]?.squareImageToShow?.let { it + 1 } ?: 0
                     }
-                    if (i - 1 >= 0 && j + 1 < mVerticalSize && mFieldObjects[i - 1][j + 1]?.squareImageToShow != MINE) { //Start Bottom position
+                    if (i - 1 >= 0 && j + 1 < mVerticalSize && mFieldObjects[i - 1][j + 1]?.squareImageToShow != Constants.MINE) { //Start Bottom position
                         mFieldObjects[i - 1][j + 1]?.squareImageToShow = mFieldObjects[i - 1][j + 1]?.squareImageToShow?.let { it + 1 } ?: 0
                     }
-                    if (j - 1 >= 0 && mFieldObjects[i][j - 1]?.squareImageToShow != MINE) { //Top position
+                    if (j - 1 >= 0 && mFieldObjects[i][j - 1]?.squareImageToShow != Constants.MINE) { //Top position
                         mFieldObjects[i][j - 1]?.squareImageToShow = mFieldObjects[i][j - 1]?.squareImageToShow?.let { it + 1 } ?: 0
                     }
-                    if (i + 1 < mHorizontalSize && j - 1 >= 0 && mFieldObjects[i + 1][j - 1]?.squareImageToShow != MINE) { //Top End position
+                    if (i + 1 < mHorizontalSize && j - 1 >= 0 && mFieldObjects[i + 1][j - 1]?.squareImageToShow != Constants.MINE) { //Top End position
                         mFieldObjects[i + 1][j - 1]?.squareImageToShow = mFieldObjects[i + 1][j - 1]?.squareImageToShow?.let { it + 1 } ?: 0
                     }
-                    if (i + 1 < mHorizontalSize && mFieldObjects[i + 1][j]?.squareImageToShow != MINE) { //End position
+                    if (i + 1 < mHorizontalSize && mFieldObjects[i + 1][j]?.squareImageToShow != Constants.MINE) { //End position
                         mFieldObjects[i + 1][j]?.squareImageToShow = mFieldObjects[i + 1][j]?.squareImageToShow?.let { it + 1 } ?: 0
                     }
-                    if (i + 1 < mHorizontalSize && j + 1 < mVerticalSize && mFieldObjects[i + 1][j + 1]?.squareImageToShow != MINE) { //End Bottom position
+                    if (i + 1 < mHorizontalSize && j + 1 < mVerticalSize && mFieldObjects[i + 1][j + 1]?.squareImageToShow != Constants.MINE) { //End Bottom position
                         mFieldObjects[i + 1][j + 1]?.squareImageToShow = mFieldObjects[i + 1][j + 1]?.squareImageToShow?.let { it + 1 } ?: 0
                     }
-                    if (j + 1 < mVerticalSize && mFieldObjects[i][j + 1]?.squareImageToShow != MINE) { //Bottom position
+                    if (j + 1 < mVerticalSize && mFieldObjects[i][j + 1]?.squareImageToShow != Constants.MINE) { //Bottom position
                         mFieldObjects[i][j + 1]?.squareImageToShow = mFieldObjects[i][j + 1]?.squareImageToShow?.let { it + 1 } ?: 0
                     }
                 }
@@ -188,56 +221,56 @@ class MineFieldActivity : BaseActivity() {
     }
 
     private fun unCoverEmptySquares(xPos: Int, yPos: Int) {
-        if (xPos - 1 >= 0 && yPos - 1 >= 0 && mFieldObjects[xPos - 1][yPos - 1]?.squareImageToShow != MINE &&
+        if (xPos - 1 >= 0 && yPos - 1 >= 0 && mFieldObjects[xPos - 1][yPos - 1]?.squareImageToShow != Constants.MINE &&
             mFieldObjects[xPos - 1][yPos - 1]?.isCovered == true) { //Start Top position
             unCoverSquare(xPos - 1, yPos - 1)
             if (!isNumberOrMineSquare(mFieldObjects[xPos - 1][yPos - 1]?.squareImageToShow)) {
                 unCoverEmptySquares(xPos - 1, yPos - 1)
             }
         }
-        if (xPos - 1 >= 0 && mFieldObjects[xPos - 1][yPos]?.squareImageToShow != MINE &&
+        if (xPos - 1 >= 0 && mFieldObjects[xPos - 1][yPos]?.squareImageToShow != Constants.MINE &&
             mFieldObjects[xPos - 1][yPos]?.isCovered == true) { //Start position
             unCoverSquare(xPos - 1, yPos)
             if (!isNumberOrMineSquare(mFieldObjects[xPos - 1][yPos]?.squareImageToShow)) {
                 unCoverEmptySquares(xPos - 1, yPos)
             }
         }
-        if (xPos - 1 >= 0 && yPos + 1 < mVerticalSize && mFieldObjects[xPos - 1][yPos + 1]?.squareImageToShow != MINE &&
+        if (xPos - 1 >= 0 && yPos + 1 < mVerticalSize && mFieldObjects[xPos - 1][yPos + 1]?.squareImageToShow != Constants.MINE &&
             mFieldObjects[xPos - 1][yPos + 1]?.isCovered == true) { //Start Bottom position
             unCoverSquare(xPos - 1, yPos + 1)
             if (!isNumberOrMineSquare(mFieldObjects[xPos - 1][yPos + 1]?.squareImageToShow)) {
                 unCoverEmptySquares(xPos - 1, yPos + 1)
             }
         }
-        if (yPos - 1 >= 0 && mFieldObjects[xPos][yPos - 1]?.squareImageToShow != MINE &&
+        if (yPos - 1 >= 0 && mFieldObjects[xPos][yPos - 1]?.squareImageToShow != Constants.MINE &&
             mFieldObjects[xPos][yPos - 1]?.isCovered == true) { //Top position
             unCoverSquare(xPos, yPos - 1)
             if (!isNumberOrMineSquare(mFieldObjects[xPos][yPos - 1]?.squareImageToShow)) {
                 unCoverEmptySquares(xPos, yPos - 1)
             }
         }
-        if (xPos + 1 < mHorizontalSize && yPos - 1 >= 0 && mFieldObjects[xPos + 1][yPos - 1]?.squareImageToShow != MINE &&
+        if (xPos + 1 < mHorizontalSize && yPos - 1 >= 0 && mFieldObjects[xPos + 1][yPos - 1]?.squareImageToShow != Constants.MINE &&
             mFieldObjects[xPos + 1][yPos - 1]?.isCovered == true) { //Top End position
             unCoverSquare(xPos + 1, yPos - 1)
             if (!isNumberOrMineSquare(mFieldObjects[xPos + 1][yPos - 1]?.squareImageToShow)) {
                 unCoverEmptySquares(xPos + 1, yPos - 1)
             }
         }
-        if (xPos + 1 < mHorizontalSize && mFieldObjects[xPos + 1][yPos]?.squareImageToShow != MINE &&
+        if (xPos + 1 < mHorizontalSize && mFieldObjects[xPos + 1][yPos]?.squareImageToShow != Constants.MINE &&
             mFieldObjects[xPos + 1][yPos]?.isCovered == true) { //End position
             unCoverSquare(xPos + 1, yPos)
             if (!isNumberOrMineSquare(mFieldObjects[xPos + 1][yPos]?.squareImageToShow)) {
                 unCoverEmptySquares(xPos + 1, yPos)
             }
         }
-        if (xPos + 1 < mHorizontalSize && yPos + 1 < mVerticalSize && mFieldObjects[xPos + 1][yPos + 1]?.squareImageToShow != MINE &&
+        if (xPos + 1 < mHorizontalSize && yPos + 1 < mVerticalSize && mFieldObjects[xPos + 1][yPos + 1]?.squareImageToShow != Constants.MINE &&
             mFieldObjects[xPos + 1][yPos + 1]?.isCovered == true) { //End Bottom position
             unCoverSquare(xPos + 1, yPos + 1)
             if (!isNumberOrMineSquare(mFieldObjects[xPos + 1][yPos + 1]?.squareImageToShow)) {
                 unCoverEmptySquares(xPos + 1, yPos + 1)
             }
         }
-        if (yPos + 1 < mVerticalSize && mFieldObjects[xPos][yPos + 1]?.squareImageToShow != MINE &&
+        if (yPos + 1 < mVerticalSize && mFieldObjects[xPos][yPos + 1]?.squareImageToShow != Constants.MINE &&
             mFieldObjects[xPos][yPos + 1]?.isCovered == true) { //Bottom position
             unCoverSquare(xPos, yPos + 1)
             if (!isNumberOrMineSquare(mFieldObjects[xPos][yPos + 1]?.squareImageToShow)) {
@@ -248,35 +281,36 @@ class MineFieldActivity : BaseActivity() {
 
     private fun isNumberOrMineSquare(imageToShow: Int?): Boolean {
         return when (imageToShow) {
-            MINE,
-            ONE,
-            TWO,
-            THREE,
-            FOUR,
-            FIVE,
-            SIX,
-            SEVEN,
-            EIGHT -> true
+            Constants.MINE,
+            Constants.ONE,
+            Constants.TWO,
+            Constants.THREE,
+            Constants.FOUR,
+            Constants.FIVE,
+            Constants.SIX,
+            Constants.SEVEN,
+            Constants.EIGHT -> true
             else -> false
         }
     }
 
     private fun unCoverSquare(x: Int, y: Int) {
         mFieldObjects[x][y]?.isCovered = false
-        (mFieldObjects[x][y]?.squareView?.findViewById<View>(R.id.image_button) as ImageView).setImageDrawable(ResourcesCompat.getDrawable(resources, getResourceId(x, y), null))
+        (mFieldObjects[x][y]?.squareView?.findViewById<View>(R.id.image_button) as ImageView).setImageDrawable(
+            ResourcesCompat.getDrawable(resources, getResourceId(x, y), null))
     }
 
     private fun getResourceId(x: Int, y: Int): Int {
         val resourceId = when (mFieldObjects[x][y]?.squareImageToShow) {
-            MINE -> R.drawable.mine
-            ONE -> R.drawable.one
-            TWO -> R.drawable.two
-            THREE -> R.drawable.three
-            FOUR -> R.drawable.four
-            FIVE -> R.drawable.five
-            SIX -> R.drawable.six
-            SEVEN -> R.drawable.seven
-            EIGHT -> R.drawable.eight
+            Constants.MINE -> R.drawable.mine
+            Constants.ONE -> R.drawable.one
+            Constants.TWO -> R.drawable.two
+            Constants.THREE -> R.drawable.three
+            Constants.FOUR -> R.drawable.four
+            Constants.FIVE -> R.drawable.five
+            Constants.SIX -> R.drawable.six
+            Constants.SEVEN -> R.drawable.seven
+            Constants.EIGHT -> R.drawable.eight
             else -> R.drawable.uncovered
         }
         return resourceId
@@ -307,7 +341,20 @@ class MineFieldActivity : BaseActivity() {
                 setFaceImage(FaceType.KILLED, false)
                 uncoverAllSquares()
                 mGameChronometerView.stopTimer()
-                showLoseMessageDialog()
+                AlertDialogUtil.showLoseMessageDialog(requireContext(),
+                    { dialog, _ ->
+                        dialog.dismiss()
+                        findNavController().navigate(
+                            R.id.mineFiledFragment,
+                            arguments,
+                            NavOptions.Builder()
+                                .setPopUpTo(R.id.mineFiledFragment, true)
+                                .build()
+                        )
+                    },
+                    { dialog, _ ->
+                        dialog.dismiss()
+                    })
                 return@OnClickListener
             }
             imageView.setImageDrawable(ResourcesCompat.getDrawable(resources, resourceId, null))
@@ -316,69 +363,64 @@ class MineFieldActivity : BaseActivity() {
     }
 
     private fun setOnLongClickListener(fieldObject: FieldObject?, imageView: ImageView) {
-        fieldObject?.squareView?.setOnLongClickListener(OnLongClickListener {
-            Log.i(TAG, "CounterNumberOfMines: $mCounterNumberOfMines")
+        fieldObject?.squareView?.setOnLongClickListener(View.OnLongClickListener {
+            Log.d(TAG, "CounterNumberOfMines: $mCounterNumberOfMines")
             if (fieldObject.isFlagged) {
-                Log.i(TAG, "Square unflagged")
+                Log.d(TAG, "Square unflagged")
                 setFaceImage(FaceType.ANGRY, true)
                 mCounterNumberOfMines++
-                imageView.setImageDrawable(ResourcesCompat.getDrawable(resources, R.drawable.covered, null))
+                imageView.setImageDrawable(
+                    ResourcesCompat.getDrawable(
+                        resources,
+                        R.drawable.covered,
+                        null
+                    )
+                )
                 fieldObject.isFlagged = false
                 minesCounterView.updateCounter(mCounterNumberOfMines)
                 return@OnLongClickListener true
             }
             if (fieldObject.isCovered) {
-                Log.i(TAG, "Square flagged")
+                Log.d(TAG, "Square flagged")
                 setFaceImage(FaceType.SCARED, true)
                 mCounterNumberOfMines--
                 if (mCounterNumberOfMines >= 0) {
-                    if (fieldObject.squareImageToShow == MINE) {
+                    if (fieldObject.squareImageToShow == Constants.MINE) {
                         mMinesFound++
                     }
                     if (mMinesFound == mDefaultNumberOfMines) {
-                        Log.i(TAG, "You won!$mMinesFound")
+                        Log.d(TAG, "You won!$mMinesFound")
                         setFaceImage(FaceType.HAPPY, false)
-                        showWinMessageDialog()
+                        AlertDialogUtil.showWinMessageDialog(requireContext(),
+                            { dialog, _ ->
+                                dialog.dismiss()
+                                findNavController().navigate(
+                                    R.id.mineFiledFragment,
+                                    arguments,
+                                    NavOptions.Builder()
+                                        .setPopUpTo(R.id.mineFiledFragment, true)
+                                        .build()
+                                )
+                            },
+                            { dialog, _ ->
+                                dialog.dismiss()
+                            })
                         mGameChronometerView.stopTimer()
                         return@OnLongClickListener true
                     }
-                    imageView.setImageDrawable(ResourcesCompat.getDrawable(resources, R.drawable.flaged, null))
+                    imageView.setImageDrawable(
+                        ResourcesCompat.getDrawable(
+                            resources,
+                            R.drawable.flaged,
+                            null
+                        )
+                    )
                     fieldObject.isFlagged = true
                     minesCounterView.updateCounter(mCounterNumberOfMines)
                 }
             }
             true
         })
-    }
-
-    private fun showWinMessageDialog() {
-        AlertDialogUtil.createCustomAlertDialog(this,
-            alertTitle = "You Won!",
-            alertMessage = "You have won!. Do you want to start a new game?",
-            positiveButton =  Pair("Ok") { dialog, _ ->
-                dialog.dismiss()
-                finish()
-                lunchMineField()
-            },
-            negativeButton = Pair("Cancel") { dialog, _ ->
-                dialog.dismiss()
-                finish()
-            })?.show()
-    }
-
-    private fun showLoseMessageDialog() {
-        AlertDialogUtil.createCustomAlertDialog(this,
-            alertTitle = "You Lost!",
-            alertMessage = "You have lost!. Do you want to start a new game?",
-            positiveButton =  Pair("Ok") { dialog, _ ->
-                dialog.dismiss()
-                finish()
-                lunchMineField()
-            },
-            negativeButton = Pair("Cancel") { dialog, _ ->
-                dialog.dismiss()
-                finish()
-            })?.show()
     }
 
     private fun uncoverAllSquares() {
@@ -405,5 +447,4 @@ class MineFieldActivity : BaseActivity() {
             Handler().postDelayed({ mFace.setImageDrawable(ResourcesCompat.getDrawable(resources, R.drawable.smile, null)) }, 500)
         }
     }
-
 }

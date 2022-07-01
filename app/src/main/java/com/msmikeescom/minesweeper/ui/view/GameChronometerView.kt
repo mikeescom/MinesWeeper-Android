@@ -8,11 +8,12 @@ import android.widget.ImageView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.res.ResourcesCompat
 import com.msmikeescom.minesweeper.R
+import com.msmikeescom.minesweeper.viewmodel.MainViewModel
 
 class GameChronometerView: ConstraintLayout {
 
     companion object {
-        private const val TAG = "GameChronometerView"
+        private val TAG = "GameChronometerView"
     }
 
     private var tensMinutes: ImageView? = null
@@ -57,13 +58,13 @@ class GameChronometerView: ConstraintLayout {
         val unitsSecondsImageView = findViewById<ImageView>(R.id.units_seconds)
         mCountDownTimer = object : CountDownTimer(3600000, 1000) {
             override fun onTick(millisUntilFinished: Long) {
-                Log.i(TAG, "millisUntilFinished: $millisUntilFinished")
-                Log.i(TAG, "millisSinceStarted: " + (3600000 - millisUntilFinished))
+                Log.d(TAG, "millisUntilFinished: $millisUntilFinished")
+                Log.d(TAG, "millisSinceStarted: " + (3600000 - millisUntilFinished))
                 val millisSinceStarted = 3600000 - millisUntilFinished
                 val secondsSinceStarted = (millisSinceStarted - millisSinceStarted % 1000) / 1000
                 var seconds: Int
                 mChronometerTime = secondsSinceStarted.toInt()
-                Log.i(TAG, "Time: $mChronometerTime")
+                Log.d(TAG, "Time: $mChronometerTime")
                 var minutes: Int = mChronometerTime / 60
                 seconds = mChronometerTime - minutes * 60
                 if (mChronometerTime % 60 != 0) {
