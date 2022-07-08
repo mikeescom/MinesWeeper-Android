@@ -10,8 +10,8 @@ android {
         applicationId "com.msmikeescom.minesweeper"
         minSdkVersion 26
         targetSdkVersion 32
-        versionCode 1
-        versionName "1.00"
+        versionCode 4
+        versionName "2.00"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
