@@ -12,6 +12,8 @@
     <string name="title_activity_mine_field">MineFieldActivity</string>
     <string name="title_activity_settings">SettingsActivity</string>
     <string name="title_activity_records">RecordsActivity</string>
+    <string name="title_personal_records">My best times</string>
+    <string name="title_leaderboard_records">Leaderboard</string>
     <string name="your_time_was">Your time was %1$s</string>
     <string name="settings_dialog_title">Settings</string>
     <string name="settings_dialog_msg">Do you want to save your settings changes?</string>

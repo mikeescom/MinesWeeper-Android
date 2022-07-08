@@ -23,4 +23,12 @@
             android:id="@+id/action_settingsFragment_to_mineFiledFragment"
             app:destination="@id/mineFiledFragment" />
     </fragment>
+    <fragment
+        android:id="@+id/personalRecordsFragment"
+        android:name="com.msmikeescom.minesweeper.ui.fragment.PersonalRecordsFragment"
+        android:label="PersonalRecordsFragment" >
+        <action
+            android:id="@+id/action_personalRecordsFragment_to_mineFiledFragment"
+            app:destination="@id/mineFiledFragment" />
+    </fragment>
 </navigation>

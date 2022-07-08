@@ -39,9 +39,7 @@ class SettingsFragment : Fragment() {
         mainActivity.setActionBar("SETTINGS", "", false)
         listener = mainActivity
 
-        mainViewModel = ViewModelProvider(mainActivity)[MainViewModel::class.java].also {
-            it.initViewModel(mainActivity)
-        }
+        mainViewModel = ViewModelProvider(mainActivity)[MainViewModel::class.java]
 
         initViews(view)
     }

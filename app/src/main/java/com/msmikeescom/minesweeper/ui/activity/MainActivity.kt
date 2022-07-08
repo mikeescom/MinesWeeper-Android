@@ -1,5 +1,6 @@
 package com.msmikeescom.minesweeper.ui.activity
 
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.*
@@ -90,10 +91,6 @@ class MainActivity : AppCompatActivity(), IMainActivityUIListener {
 
     override fun onHideProgress() {
         hideProgress()
-    }
-
-    override fun onLaunchMineField() {
-        //TODO
     }
 
     private fun showProgress() {

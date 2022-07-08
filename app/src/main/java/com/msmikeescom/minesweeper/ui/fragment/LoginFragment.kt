@@ -44,9 +44,7 @@ class LoginFragment : Fragment() {
         listener = mainActivity
         listener.onShowProgress()
 
-        mainViewModel = ViewModelProvider(mainActivity)[MainViewModel::class.java].also {
-            it.initViewModel(mainActivity)
-        }
+        mainViewModel = ViewModelProvider(mainActivity)[MainViewModel::class.java]
 
         googleSignInClient = mainViewModel.getGoogleSignInClient(mainActivity)
         GoogleSignIn.getLastSignedInAccount(mainActivity)?.let {

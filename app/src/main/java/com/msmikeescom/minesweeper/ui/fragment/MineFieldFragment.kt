@@ -18,6 +18,8 @@ import androidx.navigation.fragment.findNavController
 import com.bumptech.glide.Glide
 import com.msmikeescom.minesweeper.R
 import com.msmikeescom.minesweeper.model.FieldObject
+import com.msmikeescom.minesweeper.repository.local.database.dto.LocalRecordItem
+import com.msmikeescom.minesweeper.repository.remote.realtimedatabase.model.RemoteRecordItem
 import com.msmikeescom.minesweeper.ui.IMainActivityUIListener
 import com.msmikeescom.minesweeper.ui.activity.MainActivity
 import com.msmikeescom.minesweeper.ui.view.GameChronometerView
@@ -69,9 +71,7 @@ class MineFieldFragment : Fragment() {
 
         initView(view)
 
-        mainViewModel = ViewModelProvider(mainActivity)[MainViewModel::class.java].also {
-            it.initViewModel(mainActivity)
-        }
+        mainViewModel = ViewModelProvider(mainActivity)[MainViewModel::class.java]
 
         mainViewModel.getUserPhotoUrl()?.let { photoUrl ->
             Glide.with(this)
@@ -391,6 +391,14 @@ class MineFieldFragment : Fragment() {
                     if (mMinesFound == mDefaultNumberOfMines) {
                         Log.d(TAG, "You won!$mMinesFound")
                         setFaceImage(FaceType.HAPPY, false)
+
+                        val localRecordItem = LocalRecordItem()
+                        mainViewModel.getNumberOfMines()?.toLong()?.let { localRecordItem.numberOfMines = it }
+                        mainViewModel.getFieldSize()?.toLong()?.let { localRecordItem.fieldSize = it }
+                        localRecordItem.timeInSeconds = mGameChronometerView.mChronometerTime.toLong()
+                        localRecordItem.timeStamp = System.currentTimeMillis()
+                        mainViewModel.setNewRecord(localRecordItem)
+
                         AlertDialogUtil.showWinMessageDialog(requireContext(),
                             { dialog, _ ->
                                 dialog.dismiss()
