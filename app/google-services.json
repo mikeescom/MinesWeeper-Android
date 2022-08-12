@@ -1,6 +1,7 @@
 {
   "project_info": {
     "project_number": "1096970147886",
+    "firebase_url": "https://minesweeper-1051f-default-rtdb.firebaseio.com",
     "project_id": "minesweeper-1051f",
     "storage_bucket": "minesweeper-1051f.appspot.com"
   },
@@ -14,11 +15,11 @@
       },
       "oauth_client": [
         {
-          "client_id": "1096970147886-05446fspq68vpm75shja0fnn2rh1usau.apps.googleusercontent.com",
+          "client_id": "1096970147886-8vnvacpnuru5s8cikipjl5m4j12d7vlt.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.msmikeescom.minesweeper",
-            "certificate_hash": "4fc8f1b9c477d5d8c0d0a0a819803574df43096f"
+            "certificate_hash": "7061591b9b34d2d8f8669accf09e8758668373b8"
           }
         },
         {
