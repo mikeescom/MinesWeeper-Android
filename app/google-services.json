@@ -1,6 +1,7 @@
 {
   "project_info": {
     "project_number": "1096970147886",
+    "firebase_url": "https://minesweeper-1051f-default-rtdb.firebaseio.com",
     "project_id": "minesweeper-1051f",
     "storage_bucket": "minesweeper-1051f.appspot.com"
   },
