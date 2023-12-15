@@ -5,13 +5,13 @@ apply plugin: 'kotlin-kapt'
 apply plugin: 'com.google.firebase.crashlytics'
 
 android {
-    compileSdkVersion 32
+    compileSdkVersion 33
     defaultConfig {
         applicationId "com.msmikeescom.minesweeper"
         minSdkVersion 26
-        targetSdkVersion 32
-        versionCode 4
-        versionName "2.00"
+        targetSdkVersion 33
+        versionCode 6
+        versionName "2.1"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
