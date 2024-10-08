@@ -7,23 +7,22 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import androidx.lifecycle.ViewModelProvider
-import androidx.navigation.fragment.findNavController
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import com.msmikeescom.minesweeper.R
-import com.msmikeescom.minesweeper.ui.IMainActivityUIListener
-import com.msmikeescom.minesweeper.ui.activity.MainActivity
-import com.msmikeescom.minesweeper.viewmodel.MainViewModel
+import com.msmikeescom.minesweeper.ui.activity.GameBoardActivity
+import com.msmikeescom.minesweeper.ui.activity.IGameBoardUIListener
+import com.msmikeescom.minesweeper.viewmodel.LogInViewModel
 
 class SettingsFragment : Fragment() {
     companion object {
         private const val TAG = "SettingsFragment"
     }
 
-    private lateinit var mainViewModel: MainViewModel
-    private lateinit var listener: IMainActivityUIListener
-    private val mainActivity: MainActivity
-        get() = activity as MainActivity
+    private lateinit var logInViewModel: LogInViewModel
+    private lateinit var listener: IGameBoardUIListener
+    private val gameBoardActivity: GameBoardActivity
+        get() = activity as GameBoardActivity
 
     private lateinit var settingsSaveButton: Button
     private lateinit var numOfMineEditText: TextInputEditText
@@ -36,10 +35,9 @@ class SettingsFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        mainActivity.setActionBar("SETTINGS", "", false)
-        listener = mainActivity
+        listener = gameBoardActivity
 
-        mainViewModel = ViewModelProvider(mainActivity)[MainViewModel::class.java]
+        logInViewModel = ViewModelProvider(gameBoardActivity)[LogInViewModel::class.java]
 
         initViews(view)
     }
@@ -53,8 +51,8 @@ class SettingsFragment : Fragment() {
             if (numOfMines.isEmpty()) {
                 numOfMinesLayout.error = getString(R.string.settings_no_mines_entered)
             } else {
-                mainViewModel.saveNumberOfMines(numOfMines.toInt())
-                findNavController().navigate(R.id.action_settingsFragment_to_mineFiledFragment)
+                logInViewModel.saveNumberOfMines(numOfMines.toInt())
+                //findNavController().navigate(R.id.action_settingsFragment_to_mineFiledFragment)
             }
         }
     }

@@ -19,7 +19,6 @@ object Constants {
     const val TIMER_BAR_SIZE = 60
 
     const val RC_SIGN_IN = 1
-    const val RC_SIGN_OUT = 2
 
     const val MAIN_USER_PREFS_NAME = "MAIN_USER_PREFS_NAME"
     const val KEY_CURRENT_USER_ID = "KEY_CURRENT_USER_ID"

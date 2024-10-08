@@ -10,10 +10,10 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.msmikeescom.minesweeper.R
 import com.msmikeescom.minesweeper.repository.local.database.dto.LocalRecordItem
-import com.msmikeescom.minesweeper.ui.IMainActivityUIListener
-import com.msmikeescom.minesweeper.ui.activity.MainActivity
+import com.msmikeescom.minesweeper.ui.activity.GameBoardActivity
+import com.msmikeescom.minesweeper.ui.activity.IGameBoardUIListener
 import com.msmikeescom.minesweeper.ui.adapter.PersonalRecordsAdapter
-import com.msmikeescom.minesweeper.viewmodel.MainViewModel
+import com.msmikeescom.minesweeper.viewmodel.LogInViewModel
 
 class PersonalRecordsFragment : Fragment() {
 
@@ -21,10 +21,10 @@ class PersonalRecordsFragment : Fragment() {
         private const val TAG = "PersonalRecordsFragment"
     }
 
-    private lateinit var mainViewModel: MainViewModel
-    private lateinit var listener: IMainActivityUIListener
-    private val mainActivity: MainActivity
-        get() = activity as MainActivity
+    private lateinit var logInViewModel: LogInViewModel
+    private lateinit var listener: IGameBoardUIListener
+    private val gameBoardActivity: GameBoardActivity
+        get() = activity as GameBoardActivity
     private lateinit var recordsRecyclerview: RecyclerView
     private lateinit var layoutManager: LinearLayoutManager
 
@@ -34,15 +34,14 @@ class PersonalRecordsFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        mainActivity.setActionBar("RECORDS", "PERSONAL", false)
-        listener = mainActivity
+        listener = gameBoardActivity
 
-        mainViewModel = ViewModelProvider(mainActivity)[MainViewModel::class.java]
-        mainViewModel.fetchAllRecords()
+        logInViewModel = ViewModelProvider(gameBoardActivity)[LogInViewModel::class.java]
+        logInViewModel.fetchAllRecords()
 
         bindViews(view)
 
-        mainViewModel.allRecordItems.observe(viewLifecycleOwner) { recordItemList ->
+        logInViewModel.allRecordItems.observe(viewLifecycleOwner) { recordItemList ->
             val sortedList = recordItemList
                 .sortedWith(compareByDescending<LocalRecordItem> { it.numberOfMines.toDouble() / it.fieldSize.toDouble() }
                 .thenBy {it.timeInSeconds})

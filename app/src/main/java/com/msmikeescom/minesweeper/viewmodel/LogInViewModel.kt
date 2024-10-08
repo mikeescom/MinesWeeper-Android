@@ -9,9 +9,12 @@ import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.ktx.auth
 import com.google.firebase.database.ChildEventListener
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
+import com.google.firebase.ktx.Firebase
 import com.msmikeescom.minesweeper.repository.MainRepository
 import com.msmikeescom.minesweeper.repository.local.database.MinesWeeperDatabase
 import com.msmikeescom.minesweeper.repository.local.database.dto.LocalRecordItem
@@ -20,17 +23,32 @@ import com.msmikeescom.minesweeper.repository.remote.realtimedatabase.RealTimeDa
 import com.msmikeescom.minesweeper.repository.remote.realtimedatabase.model.RemoteRecordItem
 import com.msmikeescom.minesweeper.utilities.Security
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-class MainViewModel : ViewModel() {
+class LogInViewModel : ViewModel() {
 
     companion object {
-        private val TAG = "MainViewModel"
+        private const val TAG = "LogInViewModel"
     }
 
+    private var auth: FirebaseAuth? = null
     private lateinit var mainRepository: MainRepository
+    private val _isLoading = MutableStateFlow(true)
+    val isLoading = _isLoading.asStateFlow()
 
     var allRecordItems = MutableLiveData<List<LocalRecordItem>>()
+
+    init {
+        viewModelScope.launch {
+            //Delay to simulate some background processing like fetching data
+            delay(3000)
+            //After task is done set isLoading to false to hide splash screen
+            _isLoading.value = false
+        }
+    }
 
     private val childEventListener = object: ChildEventListener {
         override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
@@ -67,8 +85,7 @@ class MainViewModel : ViewModel() {
         }
     }
 
-    fun initViewModel(context: Context) = viewModelScope.launch(
-        Dispatchers.Default) {
+    fun initViewModel(context: Context) = viewModelScope.launch(Dispatchers.Default) {
         Log.d(TAG, "initViewModel")
         try {
             mainRepository = MainRepository(
@@ -76,6 +93,8 @@ class MainViewModel : ViewModel() {
                 database = MinesWeeperDatabase.instance(context),
                 realTimeDatabase = RealTimeDatabase.instance()
             )
+
+            auth = Firebase.auth
 
             getUserId()?.let {
                 setUserListener(it, childEventListener)
@@ -92,6 +111,12 @@ class MainViewModel : ViewModel() {
 
         return GoogleSignIn.getClient(context, gso)
     }
+
+    fun getLastSignedInAccount(context: Context): GoogleSignInAccount? {
+        return GoogleSignIn.getLastSignedInAccount(context)
+    }
+
+    fun getPasswordSignInUser() = auth
 
     private fun getUserId() = mainRepository.getUserId()
 

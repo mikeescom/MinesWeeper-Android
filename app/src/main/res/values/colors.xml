@@ -10,4 +10,9 @@
     <color name="sub_text_color">#A5BECC</color>
     <color name="edit_text_error">#F85454</color>
     <color name="edit_text_background">#3b3b3b</color>
+
+    <color name="background_surface_1">#001F3F</color>
+    <color name="background_surface_2">#3A6D8C</color>
+    <color name="background_surface_3">#6A9AB0</color>
+    <color name="primaryText">#EAD8B1</color>
 </resources>

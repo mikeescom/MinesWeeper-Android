@@ -7,10 +7,12 @@ import android.util.Log
 import android.util.TypedValue
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
+import android.view.MenuInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.GridLayout
 import android.widget.ImageView
+import android.widget.PopupMenu
 import androidx.core.content.res.ResourcesCompat
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.NavOptions
@@ -19,27 +21,26 @@ import com.bumptech.glide.Glide
 import com.msmikeescom.minesweeper.R
 import com.msmikeescom.minesweeper.model.FieldObject
 import com.msmikeescom.minesweeper.repository.local.database.dto.LocalRecordItem
-import com.msmikeescom.minesweeper.repository.remote.realtimedatabase.model.RemoteRecordItem
-import com.msmikeescom.minesweeper.ui.IMainActivityUIListener
-import com.msmikeescom.minesweeper.ui.activity.MainActivity
+import com.msmikeescom.minesweeper.ui.activity.GameBoardActivity
 import com.msmikeescom.minesweeper.ui.view.GameChronometerView
+import com.msmikeescom.minesweeper.ui.activity.IGameBoardUIListener
 import com.msmikeescom.minesweeper.ui.view.MinesCounterView
 import com.msmikeescom.minesweeper.utilities.AlertDialogUtil
 import com.msmikeescom.minesweeper.utilities.Constants
 import com.msmikeescom.minesweeper.utilities.Constants.SQUARE_SIZE
 import com.msmikeescom.minesweeper.utilities.Constants.TIMER_BAR_SIZE
-import com.msmikeescom.minesweeper.viewmodel.MainViewModel
+import com.msmikeescom.minesweeper.viewmodel.GameBoardViewModel
 import java.util.*
 
 class MineFieldFragment : Fragment() {
     companion object {
-        private val TAG = "MineFieldFragment"
+        private const val TAG = "MineFieldFragment"
     }
 
-    private lateinit var mainViewModel: MainViewModel
-    private lateinit var listener: IMainActivityUIListener
-    private val mainActivity: MainActivity
-        get() = activity as MainActivity
+    private lateinit var gameBoardViewModel: GameBoardViewModel
+    private lateinit var listener: IGameBoardUIListener
+    private val gameBoardActivity: GameBoardActivity
+        get() = activity as GameBoardActivity
 
     private enum class FaceType {
         ANGRY, HAPPY, KILLED, SCARED, SMILE
@@ -65,15 +66,14 @@ class MineFieldFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        mainActivity.setActionBar("MINE FILED", "", false)
-        listener = mainActivity
+        listener = gameBoardActivity
         listener.onHideProgress()
 
         initView(view)
 
-        mainViewModel = ViewModelProvider(mainActivity)[MainViewModel::class.java]
+        gameBoardViewModel = ViewModelProvider(gameBoardActivity)[GameBoardViewModel::class.java]
 
-        mainViewModel.getUserPhotoUrl()?.let { photoUrl ->
+        gameBoardViewModel.getUserPhotoUrl()?.let { photoUrl ->
             Glide.with(this)
                 .load(photoUrl)
                 .circleCrop()
@@ -92,21 +92,21 @@ class MineFieldFragment : Fragment() {
     }
 
     private fun setNumberOfMines() {
-        mainViewModel.getNumberOfMines()?.let { numberOfMines ->
+        gameBoardViewModel.getNumberOfMines()?.let { numberOfMines ->
             mDefaultNumberOfMines = numberOfMines.takeIf { it > 0 } ?: kotlin.run { Constants.DEFAULT_LEVEL_NUMBER_MINES }
             mCounterNumberOfMines = mDefaultNumberOfMines
         } ?: kotlin.run {
             mDefaultNumberOfMines = Constants.DEFAULT_LEVEL_NUMBER_MINES
             mCounterNumberOfMines = Constants.DEFAULT_LEVEL_NUMBER_MINES
         }
-        mainViewModel.saveNumberOfMines(mDefaultNumberOfMines)
+        gameBoardViewModel.saveNumberOfMines(mDefaultNumberOfMines)
         minesCounterView.updateCounter(mCounterNumberOfMines)
     }
 
     private fun setMineFieldSize() {
         // Calculate ActionBar height
         val tv = TypedValue()
-        val actionBarHeight = if (mainActivity.theme.resolveAttribute(android.R.attr.actionBarSize, tv, true)) {
+        val actionBarHeight = if (gameBoardActivity.theme.resolveAttribute(android.R.attr.actionBarSize, tv, true)) {
             TypedValue.complexToDimensionPixelSize(tv.data, resources.displayMetrics)
         } else 0
         Log.d(TAG, "ActionBar height: $actionBarHeight")
@@ -121,16 +121,16 @@ class MineFieldFragment : Fragment() {
 
         // Calculate screen width and height
         val displayMetrics = DisplayMetrics()
-        mainActivity.windowManager.defaultDisplay.getMetrics(displayMetrics)
+        gameBoardActivity.windowManager.defaultDisplay.getMetrics(displayMetrics)
         val screenHeight = displayMetrics.heightPixels
         val screenWidth = displayMetrics.widthPixels
 
         // Calculate mine filed width and height
-        val mineFieldHeight = ((screenHeight - actionBarHeight - timerBarSize) / squareSize)
+        val mineFieldHeight = ((screenHeight - timerBarSize) / squareSize)
         val mineFieldWidth = screenWidth / squareSize
         mVerticalSize = mineFieldHeight.minus(1)
         mHorizontalSize = mineFieldWidth
-        mainViewModel.saveFieldSize(mineFieldHeight * mineFieldWidth)
+        gameBoardViewModel.saveFieldSize(mineFieldHeight * mineFieldWidth)
         Log.d(TAG, "Screen Size (height = $screenHeight, width = $screenWidth)")
         Log.d(TAG, "Mine Filed Size (height = $mineFieldHeight, width = $mineFieldWidth)")
         mFieldObjects = Array(mHorizontalSize) { arrayOfNulls(mVerticalSize) }
@@ -168,23 +168,41 @@ class MineFieldFragment : Fragment() {
         mMineFiled.removeAllViews()
         mFace = view.findViewById(R.id.face)
         mUserPhoto = view.findViewById(R.id.user_photo)
+        mUserPhoto.setOnClickListener {
+            showAccountOptionsPopup(it)
+        }
         setFaceImage(FaceType.HAPPY, true)
         mFace.setOnClickListener {
             AlertDialogUtil.showGameWillBeRestartedDialog(requireContext(),
                 { dialog, _ ->
                     dialog.dismiss()
-                    findNavController().navigate(
-                        R.id.mineFiledFragment,
-                        arguments,
-                        NavOptions.Builder()
-                            .setPopUpTo(R.id.mineFiledFragment, true)
-                            .build()
-                    )
+                    restartGamingBoard()
                 },
                 { dialog, _ ->
                     dialog.dismiss()
                 })
         }
+    }
+
+    private fun showAccountOptionsPopup(view: View) {
+        val popup = PopupMenu(requireActivity(), view)
+        val inflater: MenuInflater = popup.menuInflater
+        inflater.inflate(R.menu.menu_account_settings, popup.menu)
+        popup.setOnMenuItemClickListener { menuItem ->
+            when(menuItem.itemId){
+                R.id.settingsFragment-> {
+                    findNavController().navigate(R.id.action_mineFieldFragment_to_settingsFragment)
+                }
+                R.id.personalRecordsFragment-> {
+                    findNavController().navigate(R.id.action_mineFieldFragment_to_personalRecordsFragment)
+                }
+                R.id.action_logout-> {
+                    listener.logOut()
+                }
+            }
+            true
+        }
+        popup.show()
     }
 
     private fun setUpFieldNumbers() {
@@ -344,13 +362,7 @@ class MineFieldFragment : Fragment() {
                 AlertDialogUtil.showLoseMessageDialog(requireContext(),
                     { dialog, _ ->
                         dialog.dismiss()
-                        findNavController().navigate(
-                            R.id.mineFiledFragment,
-                            arguments,
-                            NavOptions.Builder()
-                                .setPopUpTo(R.id.mineFiledFragment, true)
-                                .build()
-                        )
+                        restartGamingBoard()
                     },
                     { dialog, _ ->
                         dialog.dismiss()
@@ -393,22 +405,16 @@ class MineFieldFragment : Fragment() {
                         setFaceImage(FaceType.HAPPY, false)
 
                         val localRecordItem = LocalRecordItem()
-                        mainViewModel.getNumberOfMines()?.toLong()?.let { localRecordItem.numberOfMines = it }
-                        mainViewModel.getFieldSize()?.toLong()?.let { localRecordItem.fieldSize = it }
+                        gameBoardViewModel.getNumberOfMines()?.toLong()?.let { localRecordItem.numberOfMines = it }
+                        gameBoardViewModel.getFieldSize()?.toLong()?.let { localRecordItem.fieldSize = it }
                         localRecordItem.timeInSeconds = mGameChronometerView.mChronometerTime.toLong()
                         localRecordItem.timeStamp = System.currentTimeMillis()
-                        mainViewModel.setNewRecord(localRecordItem)
+                        gameBoardViewModel.setNewRecord(localRecordItem)
 
                         AlertDialogUtil.showWinMessageDialog(requireContext(),
                             { dialog, _ ->
                                 dialog.dismiss()
-                                findNavController().navigate(
-                                    R.id.mineFiledFragment,
-                                    arguments,
-                                    NavOptions.Builder()
-                                        .setPopUpTo(R.id.mineFiledFragment, true)
-                                        .build()
-                                )
+                                restartGamingBoard()
                             },
                             { dialog, _ ->
                                 dialog.dismiss()
@@ -454,5 +460,15 @@ class MineFieldFragment : Fragment() {
         if (keepSmiling) {
             Handler().postDelayed({ mFace.setImageDrawable(ResourcesCompat.getDrawable(resources, R.drawable.smile, null)) }, 500)
         }
+    }
+
+    private fun restartGamingBoard() {
+        findNavController().navigate(
+            R.id.mineFieldFragment,
+            arguments,
+            NavOptions.Builder()
+                .setPopUpTo(R.id.mineFieldFragment, true)
+                .build()
+        )
     }
 }

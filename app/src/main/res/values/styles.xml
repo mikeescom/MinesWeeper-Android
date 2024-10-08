@@ -17,10 +17,6 @@
 
     <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
 
-    <style name="SplashTheme" parent="Theme.AppCompat.NoActionBar">
-        <item name="android:windowBackground">@drawable/splash_bg</item>
-    </style>
-
     <style name="Preference.DialogPreference.EditTextPreference" parent="AppTheme.NoActionBar">
         <item name="android:textColor">@color/text_color</item>
         <item name="titleTextColor">@color/colorPrimary</item>
@@ -28,20 +24,36 @@
     </style>
 
     <style name="AlertDialogTheme" parent="Theme.AppCompat.Light.Dialog.Alert">
-        <item name="colorAccent">@color/colorPrimary</item>
-        <item name="android:textColorPrimary">@color/colorAccent</item>
-        <item name="android:textColor">@color/colorAccent</item>
-        <item name="android:textColorSecondary">@color/sub_text_color</item>
-        <item name="android:textColorAlertDialogListItem">@color/text_color</item>
-        <item name="android:background">@color/colorPrimary</item>
+        <item name="colorAccent">@color/primaryText</item>
+        <item name="android:textColorPrimary">@color/primaryText</item>
+        <item name="android:textColor">@color/primaryText</item>
+        <item name="android:textColorSecondary">@color/primaryText</item>
+        <item name="android:textColorAlertDialogListItem">@color/primaryText</item>
+        <item name="android:background">@color/background_surface_2</item>
     </style>
 
-    <style name="GenericButton">
-        <item name="android:textSize">18dp</item>
+    <style name="AppEditTextStyle" parent="@android:style/Widget.EditText">
+        <item name="android:background">@drawable/custom_edit_text</item>
+        <item name="android:textColor">@color/primaryText</item>
+        <item name="android:padding">16dp</item>
+    </style>
+
+    <style name="GenericButton" parent="@android:style/Widget.Button">
+        <item name="android:gravity">center</item>
+        <item name="android:textSize">18sp</item>
         <item name="android:textAllCaps">true</item>
-        <item name="android:background">@color/colorPrimary</item>
-        <item name="android:textColor">@color/text_color</item>
+        <item name="android:background">@drawable/custom_generic_button</item>
+        <item name="android:textColor">@color/primaryText</item>
         <item name="android:padding">10dp</item>
+    </style>
+
+    <style name="LinkButton" parent="@android:style/Widget.Button">
+        <item name="android:gravity">center</item>
+        <item name="android:textSize">18sp</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:background">@android:color/transparent</item>
+        <item name="android:textColor">@color/primaryText</item>
+        <item name="android:textStyle">bold</item>
     </style>
 
 </resources>

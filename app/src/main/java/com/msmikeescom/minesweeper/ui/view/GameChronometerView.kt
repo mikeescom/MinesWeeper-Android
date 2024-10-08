@@ -8,12 +8,11 @@ import android.widget.ImageView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.res.ResourcesCompat
 import com.msmikeescom.minesweeper.R
-import com.msmikeescom.minesweeper.viewmodel.MainViewModel
 
 class GameChronometerView: ConstraintLayout {
 
     companion object {
-        private val TAG = "GameChronometerView"
+        private const val TAG = "GameChronometerView"
     }
 
     private var tensMinutes: ImageView? = null

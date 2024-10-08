@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="@color/digital_color_bg"
+    android:background="@color/background_surface_1"
     tools:context=".ui.fragment.MineFieldFragment">
 
     <LinearLayout
@@ -14,7 +14,7 @@
         android:gravity="center"
         android:orientation="horizontal"
         android:padding="6dp"
-        android:background="@color/digital_color_bg">
+        android:background="@color/background_surface_1">
         <com.msmikeescom.minesweeper.ui.view.MinesCounterView
             android:id="@+id/mines_counter"
             android:layout_width="0dp"
@@ -35,7 +35,8 @@
             android:id="@+id/user_photo"
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_weight="0.6"/>
+            android:layout_weight="0.6"
+            android:src="@drawable/user_place_holder"/>
     </LinearLayout>
 
     <ScrollView

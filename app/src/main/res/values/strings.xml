@@ -4,10 +4,15 @@
     <string name="common_no">No</string>
 
     <string name="app_name">MinesWeeper</string>
+    <string name="create_an_account">Create an account</string>
+    <string name="return_to_log_in">Return to Log in</string>
     <string name="action_settings">Settings</string>
     <string name="action_records">Records</string>
     <string name="action_logout">Log Out</string>
-    <string name="google_sign_in_message">To start, use your Google account to sign in</string>
+    <string name="sign_in_message">Log in with:</string>
+    <string name="sign_in_or">OR</string>
+    <string name="sign_in_forgot_password">Reset password?</string>
+    <string name="sign_in_create_account">Create an account</string>
     <string name="title_activity_main">MainActivity</string>
     <string name="title_activity_mine_field">MineFieldActivity</string>
     <string name="title_activity_settings">SettingsActivity</string>
