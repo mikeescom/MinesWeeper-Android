@@ -1,5 +1,6 @@
 package com.msmikeescom.minesweeper.ui.activity
 
+import android.app.Activity
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -73,9 +74,7 @@ class GameBoardActivity : AppCompatActivity(), IGameBoardUIListener {
     }
 
     override fun logOut() {
-        gameBoardViewModel.getPasswordSignInUser().signOut()
-        gameBoardViewModel.getGoogleSignInClient(this).signOut()
-        gameBoardViewModel.deleteUserInfo()
+        setResult(Activity.RESULT_OK)
         finish()
     }
 }

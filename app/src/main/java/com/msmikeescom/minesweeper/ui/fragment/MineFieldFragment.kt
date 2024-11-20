@@ -2,6 +2,7 @@ package com.msmikeescom.minesweeper.ui.fragment
 
 import android.os.Bundle
 import android.os.Handler
+import android.text.InputType
 import android.util.DisplayMetrics
 import android.util.Log
 import android.util.TypedValue
@@ -10,9 +11,11 @@ import android.view.LayoutInflater
 import android.view.MenuInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.EditText
 import android.widget.GridLayout
 import android.widget.ImageView
 import android.widget.PopupMenu
+import android.widget.Toast
 import androidx.core.content.res.ResourcesCompat
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.NavOptions
@@ -190,12 +193,30 @@ class MineFieldFragment : Fragment() {
         inflater.inflate(R.menu.menu_account_settings, popup.menu)
         popup.setOnMenuItemClickListener { menuItem ->
             when(menuItem.itemId){
-                R.id.settingsFragment-> {
-                    findNavController().navigate(R.id.action_mineFieldFragment_to_settingsFragment)
+                R.id.numberOfMines-> {
+                    val editText = EditText(context).also {
+                        it.inputType = InputType.TYPE_CLASS_NUMBER
+                    }
+                    AlertDialogUtil.showEditNumberOfMinesDialog(requireContext(),
+                        editText,
+                        { dialog, _ ->
+                            if (editText.text.toString().isNotEmpty()) {
+                                dialog.dismiss()
+                                val numberOfMines = editText.text.toString().toInt()
+                                gameBoardViewModel.saveNumberOfMines(numberOfMines)
+                                restartGamingBoard()
+                            } else {
+                                // TODO: Toast
+                            }
+                        },
+                        { dialog, _ ->
+                            dialog.dismiss()
+                        })
+                    //findNavController().navigate(R.id.action_mineFieldFragment_to_settingsFragment)
                 }
-                R.id.personalRecordsFragment-> {
-                    findNavController().navigate(R.id.action_mineFieldFragment_to_personalRecordsFragment)
-                }
+                //R.id.personalRecordsFragment-> {
+                //    findNavController().navigate(R.id.action_mineFieldFragment_to_personalRecordsFragment)
+                //}
                 R.id.action_logout-> {
                     listener.logOut()
                 }

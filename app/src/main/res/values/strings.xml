@@ -6,6 +6,7 @@
     <string name="app_name">MinesWeeper</string>
     <string name="create_an_account">Create an account</string>
     <string name="return_to_log_in">Return to Log in</string>
+    <string name="action_number_of_mines">Number of Mines</string>
     <string name="action_settings">Settings</string>
     <string name="action_records">Records</string>
     <string name="action_logout">Log Out</string>

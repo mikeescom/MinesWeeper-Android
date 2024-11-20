@@ -3,17 +3,17 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:context="com.msmikeescom.minesweeper.ui.SettingsActivity">
     <item
-        android:id="@+id/settingsFragment"
+        android:id="@+id/numberOfMines"
         android:orderInCategory="100"
-        android:title="@string/action_settings"
+        android:title="@string/action_number_of_mines"
         android:icon="@drawable/settings"
         app:showAsAction="never" />
-    <item
+    <!--item
         android:id="@+id/personalRecordsFragment"
         android:orderInCategory="100"
         android:title="@string/action_records"
         android:icon="@drawable/settings"
-        app:showAsAction="never" />
+        app:showAsAction="never" /-->
     <item
         android:id="@+id/action_logout"
         android:orderInCategory="100"

@@ -18,7 +18,8 @@ import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.tasks.Task
 import com.msmikeescom.minesweeper.R
-import com.msmikeescom.minesweeper.utilities.Constants
+import com.msmikeescom.minesweeper.utilities.Constants.RC_SIGN_IN
+import com.msmikeescom.minesweeper.utilities.Constants.RC_SIGN_OUT
 import com.msmikeescom.minesweeper.viewmodel.LogInViewModel
 
 class LogInActivity : AppCompatActivity(), ILogInUIListener {
@@ -74,7 +75,7 @@ class LogInActivity : AppCompatActivity(), ILogInUIListener {
     }
 
     override fun sendGoogleSignInIntent(intent: Intent, requestCode: Int) {
-        startActivityForResult(intent, Constants.RC_SIGN_IN)
+        startActivityForResult(intent, RC_SIGN_IN)
     }
 
     private fun showProgress() {
@@ -94,9 +95,14 @@ class LogInActivity : AppCompatActivity(), ILogInUIListener {
         super.onActivityResult(requestCode, resultCode, data)
 
         when (requestCode) {
-            Constants.RC_SIGN_IN -> {
+            RC_SIGN_IN -> {
                 val task: Task<GoogleSignInAccount> = GoogleSignIn.getSignedInAccountFromIntent(data)
                 handleGoogleSignInResult(task)
+            }
+            RC_SIGN_OUT -> {
+                if (resultCode == RESULT_OK) {
+                    logOut()
+                }
             }
         }
     }
@@ -115,11 +121,15 @@ class LogInActivity : AppCompatActivity(), ILogInUIListener {
         googleSignInAccount?.let {
             logInViewModel.saveUserInfo(it)
         }
-        startActivity(Intent(this, GameBoardActivity::class.java))
+        startActivityForResult(Intent(this, GameBoardActivity::class.java), RC_SIGN_OUT)
     }
 
     private fun logOut() {
-        logInViewModel.getGoogleSignInClient(this).signOut()
+        if (logInViewModel.getPasswordSignInUser()?.currentUser != null) {
+            logInViewModel.getPasswordSignInUser()?.signOut()
+        } else {
+            logInViewModel.getGoogleSignInClient(this).signOut()
+        }
         logInViewModel.deleteUserInfo()
         findNavController(R.id.nav_host_fragment).navigate(R.id.loginFragment)
     }

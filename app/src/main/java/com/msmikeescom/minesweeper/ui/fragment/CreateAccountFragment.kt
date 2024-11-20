@@ -77,6 +77,10 @@ class CreateAccountFragment : Fragment() {
                         Log.d(TAG, "createAccountWithEmail: Success")
                         findNavController().navigateUp()
                     } else {
+                        AlertDialogUtil.showEmailAddressIsAlreadyUsedDialog(logInActivity){ dialogInterface, _ ->
+                            dialogInterface.dismiss()
+                            findNavController().navigateUp()
+                        }
                         Log.e(TAG, "createAccountWithEmail: Error creating account")
                     }
                 }

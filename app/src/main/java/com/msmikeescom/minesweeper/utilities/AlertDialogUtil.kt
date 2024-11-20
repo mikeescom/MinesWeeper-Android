@@ -5,12 +5,14 @@ import android.app.AlertDialog
 import android.content.Context
 import android.content.DialogInterface
 import android.view.ContextThemeWrapper
+import android.widget.EditText
 import com.msmikeescom.minesweeper.R
 
 object AlertDialogUtil {
     private fun createCustomAlertDialog(context: Context,
                                         alertTitle: String,
-                                        alertMessage: String,
+                                        alertMessage: String? = null,
+                                        editText: EditText? = null,
                                         positiveButton: Pair<String, ((DialogInterface, Int) -> Unit)>,
                                         negativeButton: Pair<String, ((DialogInterface, Int) -> Unit)>? = null,
                                         neutralButton: Pair<String, ((DialogInterface, Int) -> Unit)>? = null,
@@ -25,6 +27,9 @@ object AlertDialogUtil {
         val alertDialogBuilder = AlertDialog.Builder(ContextThemeWrapper(context, R.style.AlertDialogTheme))
         alertDialogBuilder.setTitle(alertTitle)
         alertDialogBuilder.setMessage(alertMessage)
+        if (editText != null) {
+            alertDialogBuilder.setView(editText)
+        }
         alertDialogBuilder.setPositiveButton(positiveButton.first, positiveButton.second)
         if (negativeButton != null) {
             alertDialogBuilder.setNegativeButton(negativeButton.first, negativeButton.second)
@@ -45,6 +50,19 @@ object AlertDialogUtil {
         }
 
         return true
+    }
+
+    fun showEditNumberOfMinesDialog(context: Context,
+                                    editText: EditText,
+                                    positiveButtonAction: ((DialogInterface, Int) -> Unit),
+                                    negativeButtonAction: ((DialogInterface, Int) -> Unit)) {
+        createCustomAlertDialog(
+            context = context,
+            alertTitle = "Edit number of mines",
+            editText = editText,
+            positiveButton = Pair("Update", positiveButtonAction),
+            negativeButton = Pair("Cancel", negativeButtonAction)
+        )?.show()
     }
 
     fun showGameWillBeRestartedDialog(context: Context,
@@ -100,6 +118,16 @@ object AlertDialogUtil {
             context = context,
             alertTitle = "Field is missing",
             alertMessage = "Email or Password cannot be both empty",
+            positiveButton = Pair("Ok", positiveButtonAction)
+        )?.show()
+    }
+
+    fun showEmailAddressIsAlreadyUsedDialog(context: Context,
+                                     positiveButtonAction: ((DialogInterface, Int) -> Unit)) {
+        createCustomAlertDialog(
+            context = context,
+            alertTitle = "Error",
+            alertMessage = "The email address is already in use by another account.",
             positiveButton = Pair("Ok", positiveButtonAction)
         )?.show()
     }

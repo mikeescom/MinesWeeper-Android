@@ -49,25 +49,23 @@ class LoginFragment : Fragment() {
 
         logInViewModel = ViewModelProvider(logInActivity)[LogInViewModel::class.java]
 
-        logInViewModel.getLastSignedInAccount(logInActivity)?.let {
-            Log.d(TAG, "onViewCreated: Google signing account was found. Navigate to Game Board")
-            listener.navigateToMineField()
-        } ?: kotlin.run {
-            Log.d(TAG, "onViewCreated: Google signing account was not found.")
-            initViews(view)
-        }
-    }
+        val googleSignInAccount = logInViewModel.getLastSignedInAccount(logInActivity)
+        val passwordSignInAccount = logInViewModel.getPasswordSignInUser()?.currentUser
 
-    override fun onStart() {
-        Log.d(TAG, "onStart")
-        super.onStart()
-
-        if (logInViewModel.getPasswordSignInUser()?.currentUser != null) {
-            Log.d(TAG, "onStart: Password signing account was found. Navigate to Game Board")
-            listener.navigateToMineField()
-        } else {
-            Log.d(TAG, "onStart: No Google or Password signing accounts were found. Render password login view")
-            listener.onHideProgressBar()
+        when {
+            googleSignInAccount != null -> {
+                Log.d(TAG, "onViewCreated: Google signing account was found. Navigate to Game Board")
+                listener.navigateToMineField(googleSignInAccount)
+            }
+            passwordSignInAccount != null -> {
+                Log.d(TAG, "onViewCreated: Password signing account was found. Navigate to Game Board")
+                listener.navigateToMineField()
+            }
+            else -> {
+                Log.d(TAG, "onViewCreated: No Google or Password signing accounts were found. Show login view")
+                initViews(view)
+                listener.onHideProgressBar()
+            }
         }
     }
 
