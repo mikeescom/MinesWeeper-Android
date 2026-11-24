@@ -21,6 +21,14 @@ open class LocalRecordItem() : Parcelable {
                 return arrayOfNulls(size)
             }
         }
+
+        fun fromRemote(itemId: String, remote: RemoteRecordItem) = LocalRecordItem().apply {
+            this.itemId = itemId
+            numberOfMines = remote.numberOfMines
+            fieldSize = remote.fieldSize
+            timeInSeconds = remote.timeInSeconds
+            timeStamp = remote.timeStamp
+        }
     }
 
     @PrimaryKey

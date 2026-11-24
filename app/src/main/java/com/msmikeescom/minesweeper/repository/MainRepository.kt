@@ -62,7 +62,7 @@ class MainRepository(sharePreferences: MinesWeeperSharedPreferences,
         }
     }
 
-    suspend fun deleteRecord() = withContext(Dispatchers.IO) {
+    suspend fun deleteAllRecords() = withContext(Dispatchers.IO) {
         mutex.withLock {
             recordItemDAO.deleteRecordItems()
         }
@@ -77,11 +77,18 @@ class MainRepository(sharePreferences: MinesWeeperSharedPreferences,
     }
 
     // Remote database
-    fun setUserListener(userId: String, listener: ChildEventListener) {
-        realTimeDatabase.setUserListener(userId, listener)
+    fun addUserListener(userId: String, listener: ChildEventListener) {
+        realTimeDatabase.addUserListener(userId, listener)
     }
 
-    fun setNewRecord(userId: String, itemId: String, remoteRecordItem: RemoteRecordItem) {
-        realTimeDatabase.setNewRecord(userId, itemId, remoteRecordItem)
+    fun removeUserListener(userId: String, listener: ChildEventListener) {
+        realTimeDatabase.removeUserListener(userId, listener)
+    }
+
+    fun addNewRecord(userId: String, remoteRecordItem: RemoteRecordItem): String? =
+        realTimeDatabase.addNewRecord(userId, remoteRecordItem)
+
+    fun copyLegacyRecords(fromUserId: String, toUserId: String) {
+        realTimeDatabase.copyLegacyRecords(fromUserId, toUserId)
     }
 }

@@ -13,7 +13,7 @@ import com.msmikeescom.minesweeper.repository.local.database.dto.LocalRecordItem
 import com.msmikeescom.minesweeper.ui.activity.GameBoardActivity
 import com.msmikeescom.minesweeper.ui.activity.IGameBoardUIListener
 import com.msmikeescom.minesweeper.ui.adapter.PersonalRecordsAdapter
-import com.msmikeescom.minesweeper.viewmodel.LogInViewModel
+import com.msmikeescom.minesweeper.viewmodel.GameBoardViewModel
 
 class PersonalRecordsFragment : Fragment() {
 
@@ -21,7 +21,7 @@ class PersonalRecordsFragment : Fragment() {
         private const val TAG = "PersonalRecordsFragment"
     }
 
-    private lateinit var logInViewModel: LogInViewModel
+    private lateinit var gameBoardViewModel: GameBoardViewModel
     private lateinit var listener: IGameBoardUIListener
     private val gameBoardActivity: GameBoardActivity
         get() = activity as GameBoardActivity
@@ -36,12 +36,12 @@ class PersonalRecordsFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         listener = gameBoardActivity
 
-        logInViewModel = ViewModelProvider(gameBoardActivity)[LogInViewModel::class.java]
-        logInViewModel.fetchAllRecords()
+        gameBoardViewModel = ViewModelProvider(gameBoardActivity)[GameBoardViewModel::class.java]
+        gameBoardViewModel.fetchAllRecords()
 
         bindViews(view)
 
-        logInViewModel.allRecordItems.observe(viewLifecycleOwner) { recordItemList ->
+        gameBoardViewModel.allRecordItems.observe(viewLifecycleOwner) { recordItemList ->
             val sortedList = recordItemList
                 .sortedWith(compareByDescending<LocalRecordItem> { it.numberOfMines.toDouble() / it.fieldSize.toDouble() }
                 .thenBy {it.timeInSeconds})

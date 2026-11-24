@@ -12,14 +12,14 @@ import com.google.android.material.textfield.TextInputLayout
 import com.msmikeescom.minesweeper.R
 import com.msmikeescom.minesweeper.ui.activity.GameBoardActivity
 import com.msmikeescom.minesweeper.ui.activity.IGameBoardUIListener
-import com.msmikeescom.minesweeper.viewmodel.LogInViewModel
+import com.msmikeescom.minesweeper.viewmodel.GameBoardViewModel
 
 class SettingsFragment : Fragment() {
     companion object {
         private const val TAG = "SettingsFragment"
     }
 
-    private lateinit var logInViewModel: LogInViewModel
+    private lateinit var gameBoardViewModel: GameBoardViewModel
     private lateinit var listener: IGameBoardUIListener
     private val gameBoardActivity: GameBoardActivity
         get() = activity as GameBoardActivity
@@ -37,7 +37,7 @@ class SettingsFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         listener = gameBoardActivity
 
-        logInViewModel = ViewModelProvider(gameBoardActivity)[LogInViewModel::class.java]
+        gameBoardViewModel = ViewModelProvider(gameBoardActivity)[GameBoardViewModel::class.java]
 
         initViews(view)
     }
@@ -51,7 +51,7 @@ class SettingsFragment : Fragment() {
             if (numOfMines.isEmpty()) {
                 numOfMinesLayout.error = getString(R.string.settings_no_mines_entered)
             } else {
-                logInViewModel.saveNumberOfMines(numOfMines.toInt())
+                gameBoardViewModel.saveNumberOfMines(numOfMines.toInt())
                 //findNavController().navigate(R.id.action_settingsFragment_to_mineFiledFragment)
             }
         }

@@ -10,7 +10,6 @@ import android.widget.Button
 import android.widget.EditText
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
-import com.google.firebase.auth.FirebaseAuth
 import com.msmikeescom.minesweeper.R
 import com.msmikeescom.minesweeper.ui.activity.ILogInUIListener
 import com.msmikeescom.minesweeper.ui.activity.LogInActivity
@@ -21,8 +20,6 @@ class CreateAccountFragment : Fragment() {
     companion object {
         private const val TAG = "CreateAccountFragment"
     }
-
-    private lateinit var auth: FirebaseAuth
 
     private lateinit var emailEditText: EditText
     private lateinit var passwordEditText: EditText
@@ -70,9 +67,9 @@ class CreateAccountFragment : Fragment() {
         val email = emailEditText.text.toString()
         val password = passwordEditText.text.toString()
         if (email.isNotEmpty() && password.isNotEmpty()) {
-            logInViewModel.getPasswordSignInUser()
-                ?.createUserWithEmailAndPassword(email, password)
-                ?.addOnCompleteListener(logInActivity) { task ->
+            logInViewModel.auth
+                .createUserWithEmailAndPassword(email, password)
+                .addOnCompleteListener(logInActivity) { task ->
                     if (task.isSuccessful) {
                         Log.d(TAG, "createAccountWithEmail: Success")
                         findNavController().navigateUp()
