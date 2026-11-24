@@ -6,18 +6,15 @@ import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.google.firebase.auth.ktx.auth
+import com.google.firebase.auth.auth
 import com.google.firebase.database.ChildEventListener
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.DatabaseException
-import com.google.firebase.ktx.Firebase
+import com.google.firebase.Firebase
 import com.msmikeescom.minesweeper.game.Board
 import com.msmikeescom.minesweeper.repository.MainRepository
-import com.msmikeescom.minesweeper.repository.local.database.MinesWeeperDatabase
 import com.msmikeescom.minesweeper.repository.local.database.dto.LocalRecordItem
-import com.msmikeescom.minesweeper.repository.local.sharepreferences.MinesWeeperSharedPreferences
-import com.msmikeescom.minesweeper.repository.remote.realtimedatabase.RealTimeDatabase
 import com.msmikeescom.minesweeper.repository.remote.realtimedatabase.model.RemoteRecordItem
 import kotlinx.coroutines.launch
 
@@ -103,11 +100,7 @@ class GameBoardViewModel : ViewModel() {
     fun initViewModel(context: Context) {
         if (::mainRepository.isInitialized) return
         Log.d(TAG, "initViewModel")
-        mainRepository = MainRepository(
-            sharePreferences = MinesWeeperSharedPreferences.instance(context.applicationContext),
-            database = MinesWeeperDatabase.instance(context),
-            realTimeDatabase = RealTimeDatabase.instance()
-        )
+        mainRepository = MainRepository.create(context)
 
         userId = Firebase.auth.currentUser?.uid
         userId?.let { mainRepository.addUserListener(it, childEventListener) }

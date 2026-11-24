@@ -63,7 +63,7 @@ class MineFieldFragment : Fragment() {
     private val resetFace = Runnable { mFace.setImageResource(R.drawable.smile) }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        return inflater.inflate(R.layout.fragment_mine_filed, container, false)
+        return inflater.inflate(R.layout.fragment_mine_field, container, false)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {

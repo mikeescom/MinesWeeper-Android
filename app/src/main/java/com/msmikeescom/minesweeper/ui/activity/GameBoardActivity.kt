@@ -5,13 +5,11 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.ProgressBar
-import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.FragmentContainerView
 import androidx.lifecycle.ViewModelProvider
 import com.msmikeescom.minesweeper.R
+import com.msmikeescom.minesweeper.utilities.setUpFullScreen
 import com.msmikeescom.minesweeper.viewmodel.GameBoardViewModel
 
 class GameBoardActivity : AppCompatActivity(), IGameBoardUIListener {
@@ -29,28 +27,14 @@ class GameBoardActivity : AppCompatActivity(), IGameBoardUIListener {
 
     private lateinit var gameBoardViewModel: GameBoardViewModel
 
-    private var nextRequestCode = 100
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
         setContentView(R.layout.activity_game_board)
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.app_container_frame)) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-            insets
-        }
+        setUpFullScreen(findViewById(R.id.app_container_frame))
 
         gameBoardViewModel = ViewModelProvider(this)[GameBoardViewModel::class.java].also {
             it.initViewModel(this)
         }
-
-        setActionBar()
-    }
-
-    private fun setActionBar() {
-        window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_FULLSCREEN
-        supportActionBar?.hide()
     }
 
     override fun onShowProgress() {

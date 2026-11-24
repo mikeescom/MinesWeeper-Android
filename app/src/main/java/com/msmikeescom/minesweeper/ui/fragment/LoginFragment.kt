@@ -8,6 +8,11 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
+import android.widget.Toast
+import androidx.credentials.exceptions.GetCredentialCancellationException
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.launch
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import com.google.android.gms.common.SignInButton
@@ -15,7 +20,6 @@ import com.msmikeescom.minesweeper.R
 import com.msmikeescom.minesweeper.ui.activity.ILogInUIListener
 import com.msmikeescom.minesweeper.ui.activity.LogInActivity
 import com.msmikeescom.minesweeper.utilities.AlertDialogUtil
-import com.msmikeescom.minesweeper.utilities.Constants
 import com.msmikeescom.minesweeper.utilities.ToastUtil
 import com.msmikeescom.minesweeper.viewmodel.LogInViewModel
 
@@ -49,42 +53,14 @@ class LoginFragment : Fragment() {
 
         logInViewModel = ViewModelProvider(logInActivity)[LogInViewModel::class.java]
 
-        val googleSignInAccount = logInViewModel.getLastSignedInAccount(logInActivity)
-
-        when {
-            logInViewModel.currentUser() != null -> {
-                Log.d(TAG, "onViewCreated: Firebase user was found. Navigate to Game Board")
-                listener.navigateToMineField(googleSignInAccount)
-            }
-            googleSignInAccount != null -> {
-                // Signed in to Google by an older version, which never signed in to Firebase.
-                Log.d(TAG, "onViewCreated: Google account without Firebase user. Signing in silently")
-                signInSilentlyWithGoogle(view)
-            }
-            else -> {
-                Log.d(TAG, "onViewCreated: No signed-in user was found. Show login view")
-                showLoginViews(view)
-            }
+        if (logInViewModel.currentUser() != null) {
+            Log.d(TAG, "onViewCreated: Firebase user was found. Navigate to Game Board")
+            listener.navigateToMineField()
+        } else {
+            Log.d(TAG, "onViewCreated: No signed-in user was found. Show login view")
+            initViews(view)
+            listener.onHideProgressBar()
         }
-    }
-
-    private fun showLoginViews(view: View) {
-        initViews(view)
-        listener.onHideProgressBar()
-    }
-
-    private fun signInSilentlyWithGoogle(view: View) {
-        logInViewModel.getGoogleSignInClient(logInActivity).silentSignIn()
-            .continueWithTask { task -> logInViewModel.signInToFirebase(task.result) }
-            .addOnCompleteListener(logInActivity) { task ->
-                if (this.view == null) return@addOnCompleteListener // Fragment left the screen
-                if (task.isSuccessful) {
-                    listener.navigateToMineField(logInViewModel.getLastSignedInAccount(logInActivity))
-                } else {
-                    Log.w(TAG, "signInSilentlyWithGoogle failed", task.exception)
-                    showLoginViews(view)
-                }
-            }
     }
 
     private fun initViews(view: View) {
@@ -111,8 +87,19 @@ class LoginFragment : Fragment() {
 
     private fun signInWithGoogle() {
         Log.d(TAG, "signInWithGoogle")
-        val signInIntent = logInViewModel.getGoogleSignInClient(logInActivity).signInIntent
-        listener.sendGoogleSignInIntent(signInIntent, Constants.RC_SIGN_IN)
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                logInViewModel.signInWithGoogle(requireActivity())
+                listener.navigateToMineField()
+            } catch (e: GetCredentialCancellationException) {
+                Log.d(TAG, "signInWithGoogle: cancelled")
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.e(TAG, "signInWithGoogle failed", e)
+                Toast.makeText(requireContext(), R.string.login_failed, Toast.LENGTH_LONG).show()
+            }
+        }
     }
 
     private fun signInWithPassword() {

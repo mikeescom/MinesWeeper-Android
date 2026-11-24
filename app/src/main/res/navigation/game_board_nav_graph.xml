@@ -8,8 +8,8 @@
     <fragment
         android:id="@+id/mineFieldFragment"
         android:name="com.msmikeescom.minesweeper.ui.fragment.MineFieldFragment"
-        android:label="fragment_mine_filed"
-        tools:layout="@layout/fragment_mine_filed" >
+        android:label="fragment_mine_field"
+        tools:layout="@layout/fragment_mine_field" >
         <action
             android:id="@+id/action_mineFieldFragment_to_settingsFragment"
             app:destination="@id/settingsFragment" />
