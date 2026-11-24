@@ -119,6 +119,26 @@ class GameBoardViewModel @Inject constructor(
         mainRepository.saveFieldSize(fieldSize)
     }
 
+    /** The signed-in player's email, shown on the settings screen. */
+    val userEmail: String?
+        get() = auth.currentUser?.email
+
+    /** Largest mine count the current board allows. */
+    fun maxMines(): Int = board?.let { Board.maxMines(it.width, it.height) } ?: Board.MAX_DISPLAYABLE_MINES
+
+    /**
+     * Saves a new mine count from the settings screen. If the current game uses a different
+     * count, it's dropped so the game screen starts a fresh one.
+     */
+    fun updateNumberOfMines(numberOfMines: Int) {
+        saveNumberOfMines(numberOfMines)
+        if (board?.mineCount != numberOfMines) {
+            board = null
+            timerStartedAt = null
+            timerStoppedAt = null
+        }
+    }
+
     fun saveNumberOfMines(numberOfMines: Int) {
         mainRepository.saveNumberOfMines(numberOfMines)
     }
