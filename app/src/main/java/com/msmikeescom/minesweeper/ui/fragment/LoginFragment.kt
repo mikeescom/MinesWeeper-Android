@@ -13,7 +13,8 @@ import androidx.credentials.exceptions.GetCredentialCancellationException
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
-import androidx.lifecycle.ViewModelProvider
+import androidx.fragment.app.activityViewModels
+import dagger.hilt.android.AndroidEntryPoint
 import androidx.navigation.fragment.findNavController
 import com.google.android.gms.common.SignInButton
 import com.msmikeescom.minesweeper.R
@@ -23,6 +24,7 @@ import com.msmikeescom.minesweeper.utilities.AlertDialogUtil
 import com.msmikeescom.minesweeper.utilities.ToastUtil
 import com.msmikeescom.minesweeper.viewmodel.LogInViewModel
 
+@AndroidEntryPoint
 class LoginFragment : Fragment() {
     companion object {
         private const val TAG = "LoginFragment"
@@ -35,7 +37,7 @@ class LoginFragment : Fragment() {
     private lateinit var resetPasswordButton: Button
     private lateinit var createAccountButton: Button
 
-    private lateinit var logInViewModel: LogInViewModel
+    private val logInViewModel: LogInViewModel by activityViewModels()
     private lateinit var listener: ILogInUIListener
     private val logInActivity: LogInActivity
         get() = activity as LogInActivity
@@ -51,7 +53,6 @@ class LoginFragment : Fragment() {
         listener = logInActivity
         listener.onShowProgressBar()
 
-        logInViewModel = ViewModelProvider(logInActivity)[LogInViewModel::class.java]
 
         if (logInViewModel.currentUser() != null) {
             Log.d(TAG, "onViewCreated: Firebase user was found. Navigate to Game Board")

@@ -10,34 +10,27 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
-import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
-import com.google.firebase.auth.auth
 import com.msmikeescom.minesweeper.R
 import com.msmikeescom.minesweeper.repository.MainRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 import kotlinx.coroutines.tasks.await
 
-class LogInViewModel : ViewModel() {
+@HiltViewModel
+class LogInViewModel @Inject constructor(
+    /** Every player, Google or email, is signed in to Firebase Auth; its uid keys their records. */
+    val auth: FirebaseAuth,
+    private val mainRepository: MainRepository,
+    @ApplicationContext private val appContext: Context,
+) : ViewModel() {
 
     companion object {
         private const val TAG = "LogInViewModel"
-    }
-
-    /** Every player, Google or email, is signed in to Firebase Auth; its uid keys their records. */
-    val auth: FirebaseAuth = Firebase.auth
-    private lateinit var mainRepository: MainRepository
-
-    /**
-     * Sets up the repository synchronously so it is ready before the login fragment
-     * checks for a signed-in user. Safe to call again after the activity is recreated.
-     */
-    fun initViewModel(context: Context) {
-        if (::mainRepository.isInitialized) return
-        Log.d(TAG, "initViewModel")
-        mainRepository = MainRepository.create(context)
     }
 
     fun currentUser(): FirebaseUser? = auth.currentUser
@@ -74,7 +67,7 @@ class LogInViewModel : ViewModel() {
     }
 
     /** Signs out of Firebase and Google and forgets this player's local data. */
-    fun logOut(appContext: Context) {
+    fun logOut() {
         Log.d(TAG, "logOut")
         auth.signOut()
         mainRepository.deleteUserInfo()

@@ -15,7 +15,9 @@ import android.widget.Toast
 import androidx.annotation.DrawableRes
 import androidx.core.view.doOnLayout
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.ViewModelProvider
+import androidx.fragment.app.activityViewModels
+import dagger.hilt.android.AndroidEntryPoint
+import androidx.navigation.fragment.findNavController
 import com.bumptech.glide.Glide
 import com.msmikeescom.minesweeper.R
 import com.msmikeescom.minesweeper.game.Board
@@ -33,13 +35,14 @@ import com.msmikeescom.minesweeper.viewmodel.GameBoardViewModel
  * Draws the current [Board] and forwards taps to it. All game rules live in [Board]; the board
  * and timer are kept in [GameBoardViewModel] so a game survives configuration changes.
  */
+@AndroidEntryPoint
 class MineFieldFragment : Fragment() {
     companion object {
         private const val TAG = "MineFieldFragment"
         private const val FACE_RESET_DELAY_MS = 500L
     }
 
-    private lateinit var gameBoardViewModel: GameBoardViewModel
+    private val gameBoardViewModel: GameBoardViewModel by activityViewModels()
     private lateinit var listener: IGameBoardUIListener
     private val gameBoardActivity: GameBoardActivity
         get() = activity as GameBoardActivity
@@ -71,7 +74,6 @@ class MineFieldFragment : Fragment() {
         listener = gameBoardActivity
         listener.onHideProgress()
 
-        gameBoardViewModel = ViewModelProvider(gameBoardActivity)[GameBoardViewModel::class.java]
 
         initView(view)
 
@@ -136,6 +138,7 @@ class MineFieldFragment : Fragment() {
         popup.setOnMenuItemClickListener { menuItem ->
             when (menuItem.itemId) {
                 R.id.numberOfMines -> showEditNumberOfMinesDialog()
+                R.id.action_records -> findNavController().navigate(R.id.action_mineFieldFragment_to_personalRecordsFragment)
                 R.id.action_logout -> listener.logOut()
             }
             true

@@ -1,35 +1,42 @@
 package com.msmikeescom.minesweeper.viewmodel
 
-import android.content.Context
 import android.os.SystemClock
 import android.util.Log
-import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.map
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.google.firebase.auth.auth
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.ChildEventListener
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.DatabaseException
-import com.google.firebase.Firebase
 import com.msmikeescom.minesweeper.game.Board
+import com.msmikeescom.minesweeper.game.RecordRanking
 import com.msmikeescom.minesweeper.repository.MainRepository
 import com.msmikeescom.minesweeper.repository.local.database.dto.LocalRecordItem
 import com.msmikeescom.minesweeper.repository.remote.realtimedatabase.model.RemoteRecordItem
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class GameBoardViewModel : ViewModel() {
+@HiltViewModel
+class GameBoardViewModel @Inject constructor(
+    private val mainRepository: MainRepository,
+    private val auth: FirebaseAuth,
+) : ViewModel() {
 
     companion object {
         private const val TAG = "GameBoardViewModel"
     }
 
-    private lateinit var mainRepository: MainRepository
-
     /** Firebase Auth uid of the signed-in player; records are stored under it. */
     private var userId: String? = null
 
-    var allRecordItems = MutableLiveData<List<LocalRecordItem>>()
+    /** The player's records, best first, updated as new ones are saved or synced. */
+    val rankedRecords: LiveData<List<LocalRecordItem>> by lazy {
+        mainRepository.observeAllRecords().map { RecordRanking.rank(it) }
+    }
 
     /** Current round. Kept here so it survives configuration changes. */
     var board: Board? = null
@@ -93,18 +100,10 @@ class GameBoardViewModel : ViewModel() {
         }
     }
 
-    /**
-     * Sets up the repository synchronously so it is ready before any fragment reads from it.
-     * Safe to call again after the activity is recreated.
-     */
-    fun initViewModel(context: Context) {
-        if (::mainRepository.isInitialized) return
-        Log.d(TAG, "initViewModel")
-        mainRepository = MainRepository.create(context)
-
-        userId = Firebase.auth.currentUser?.uid
+    init {
+        userId = auth.currentUser?.uid
         userId?.let { mainRepository.addUserListener(it, childEventListener) }
-            ?: Log.w(TAG, "initViewModel: no signed-in Firebase user, records won't sync")
+            ?: Log.w(TAG, "init: no signed-in Firebase user, records won't sync")
     }
 
     override fun onCleared() {
@@ -134,9 +133,4 @@ class GameBoardViewModel : ViewModel() {
         Log.d(TAG, "setNewRecord: saved as $key")
     }
 
-    fun fetchAllRecords() {
-        viewModelScope.launch {
-            allRecordItems.value = mainRepository.loadAllRecords()
-        }
-    }
 }

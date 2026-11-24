@@ -1,21 +1,21 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+# R8 rules for release builds. Libraries (Firebase, Room, Glide, AndroidX) ship their own
+# consumer rules; these cover what reflection in this app's own code needs.
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# Firebase Realtime Database reads and writes RemoteRecordItem by reflection
+# (getValue(RemoteRecordItem::class.java) / setValue(item)), so its no-arg constructor and
+# property names must survive. Signature keeps generic types for the database mapper.
+-keepattributes Signature
+-keepclassmembers class com.msmikeescom.minesweeper.repository.remote.realtimedatabase.model.** {
+    *;
+}
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-# -keepattributes SourceFile,LineNumberTable
+# Credential Manager finds its Play Services provider by reflection.
+-if class androidx.credentials.CredentialManager
+-keep class androidx.credentials.playservices.** {
+  *;
+}
 
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-# -renamesourcefileattribute SourceFile
+# Readable Crashlytics stack traces: keep line numbers (Crashlytics uploads the mapping file
+# for release builds) and the names of exception classes.
+-keepattributes SourceFile,LineNumberTable
+-keep public class * extends java.lang.Exception

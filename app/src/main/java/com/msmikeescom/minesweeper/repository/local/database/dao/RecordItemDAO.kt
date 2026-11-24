@@ -1,5 +1,6 @@
 package com.msmikeescom.minesweeper.repository.local.database.dao
 
+import androidx.lifecycle.LiveData
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
@@ -13,6 +14,10 @@ interface RecordItemDAO {
 
     @Query("select * from record_items")
     fun loadAllRecordItems(): List<LocalRecordItem>
+
+    /** Emits the records again whenever the table changes. */
+    @Query("select * from record_items")
+    fun observeAllRecordItems(): LiveData<List<LocalRecordItem>>
 
     @Query("select itemId from record_items")
     fun loadAllItemIds(): List<String>
