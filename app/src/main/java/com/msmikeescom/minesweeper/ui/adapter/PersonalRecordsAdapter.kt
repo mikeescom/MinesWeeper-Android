@@ -1,33 +1,37 @@
 package com.msmikeescom.minesweeper.ui.adapter
 
+import android.annotation.SuppressLint
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.msmikeescom.minesweeper.R
+import com.msmikeescom.minesweeper.game.RecordRanking
 import com.msmikeescom.minesweeper.repository.local.database.dto.LocalRecordItem
-import java.text.SimpleDateFormat
-import java.util.*
+import java.text.DateFormat
+import java.util.Date
+import java.util.Locale
 
-class PersonalRecordsAdapter (private var dataSet: List<LocalRecordItem>): RecyclerView.Adapter<PersonalRecordsAdapter.ViewHolder>() {
+class PersonalRecordsAdapter : RecyclerView.Adapter<PersonalRecordsAdapter.ViewHolder>() {
+
+    private var dataSet: List<LocalRecordItem> = emptyList()
+    private val dateFormat = DateFormat.getDateInstance(DateFormat.SHORT)
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-        val recordNumber: TextView
-        val recordDifficulty: TextView
-        val recordTime: TextView
-        val numberOfMines: TextView
-        val fieldSize: TextView
-        val recordDate: TextView
+        val recordNumber: TextView = view.findViewById(R.id.record_number)
+        val recordDifficulty: TextView = view.findViewById(R.id.record_difficulty)
+        val recordTime: TextView = view.findViewById(R.id.record_time)
+        val numberOfMines: TextView = view.findViewById(R.id.number_of_mines)
+        val fieldSize: TextView = view.findViewById(R.id.field_size)
+        val recordDate: TextView = view.findViewById(R.id.record_date)
+    }
 
-        init {
-            recordNumber = view.findViewById(R.id.record_number)
-            recordDifficulty = view.findViewById(R.id.record_difficulty)
-            recordTime = view.findViewById(R.id.record_time)
-            numberOfMines = view.findViewById(R.id.number_of_mines)
-            fieldSize = view.findViewById(R.id.field_size)
-            recordDate = view.findViewById(R.id.record_date)
-        }
+    // The list is re-ranked on every change, so positions can all move.
+    @SuppressLint("NotifyDataSetChanged")
+    fun submit(records: List<LocalRecordItem>) {
+        dataSet = records
+        notifyDataSetChanged()
     }
 
     override fun onCreateViewHolder(viewGroup: ViewGroup, viewType: Int): ViewHolder {
@@ -35,26 +39,16 @@ class PersonalRecordsAdapter (private var dataSet: List<LocalRecordItem>): Recyc
         return ViewHolder(view)
     }
 
+    @SuppressLint("SetTextI18n")
     override fun onBindViewHolder(viewHolder: ViewHolder, position: Int) {
-        viewHolder.recordNumber.text = "${position.plus(1)}.-"
-        viewHolder.recordDifficulty.text = "${String.format("%.2f", dataSet[position].numberOfMines.toDouble() /
-                dataSet[position].fieldSize.toDouble())} mines/sqr."
-        viewHolder.recordTime.text = "${dataSet[position].timeInSeconds} secs."
-        viewHolder.numberOfMines.text = "${dataSet[position].numberOfMines} mines"
-        viewHolder.fieldSize.text = "${dataSet[position].fieldSize} sqr."
-        viewHolder.recordDate.text = getDateTime(dataSet[position].timeStamp.toString())
+        val item = dataSet[position]
+        viewHolder.recordNumber.text = "${position + 1}.-"
+        viewHolder.recordDifficulty.text = "${String.format(Locale.US, "%.2f", RecordRanking.density(item))} mines/sqr."
+        viewHolder.recordTime.text = "${item.timeInSeconds} secs."
+        viewHolder.numberOfMines.text = "${item.numberOfMines} mines"
+        viewHolder.fieldSize.text = "${item.fieldSize} sqr."
+        viewHolder.recordDate.text = dateFormat.format(Date(item.timeStamp))
     }
 
     override fun getItemCount() = dataSet.size
-
-    private fun getDateTime(s: String): String? {
-        return try {
-            val sdf = SimpleDateFormat("MM/dd/yyyy")
-            val netDate = Date(s.toLong())
-            sdf.format(netDate)
-        } catch (e: Exception) {
-            e.toString()
-        }
-    }
-
 }

@@ -81,6 +81,8 @@ class MainRepository(sharePreferences: MinesWeeperSharedPreferences,
         return@withContext recordItemDAO.loadAllRecordItems()
     }
 
+    fun observeAllRecords() = recordItemDAO.observeAllRecordItems()
+
     suspend fun loadAllItemIds() = withContext(Dispatchers.IO) {
         recordItemDAO.loadAllItemIds()
     }

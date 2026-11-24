@@ -1,32 +1,22 @@
 package com.msmikeescom.minesweeper.ui.fragment
 
 import android.os.Bundle
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.TextView
+import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.msmikeescom.minesweeper.R
-import com.msmikeescom.minesweeper.repository.local.database.dto.LocalRecordItem
-import com.msmikeescom.minesweeper.ui.activity.GameBoardActivity
-import com.msmikeescom.minesweeper.ui.activity.IGameBoardUIListener
 import com.msmikeescom.minesweeper.ui.adapter.PersonalRecordsAdapter
 import com.msmikeescom.minesweeper.viewmodel.GameBoardViewModel
 
+/** The player's records, best first. Opened from the account menu on the game screen. */
 class PersonalRecordsFragment : Fragment() {
 
-    companion object {
-        private const val TAG = "PersonalRecordsFragment"
-    }
-
-    private lateinit var gameBoardViewModel: GameBoardViewModel
-    private lateinit var listener: IGameBoardUIListener
-    private val gameBoardActivity: GameBoardActivity
-        get() = activity as GameBoardActivity
-    private lateinit var recordsRecyclerview: RecyclerView
-    private lateinit var layoutManager: LinearLayoutManager
+    private val adapter = PersonalRecordsAdapter()
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_personal_records, container, false)
@@ -34,29 +24,16 @@ class PersonalRecordsFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        listener = gameBoardActivity
+        val gameBoardViewModel = ViewModelProvider(requireActivity())[GameBoardViewModel::class.java]
 
-        gameBoardViewModel = ViewModelProvider(gameBoardActivity)[GameBoardViewModel::class.java]
-        gameBoardViewModel.fetchAllRecords()
+        val recyclerView = view.findViewById<RecyclerView>(R.id.records_recyclerview)
+        val emptyView = view.findViewById<TextView>(R.id.records_empty)
+        recyclerView.layoutManager = LinearLayoutManager(requireContext())
+        recyclerView.adapter = adapter
 
-        bindViews(view)
-
-        gameBoardViewModel.allRecordItems.observe(viewLifecycleOwner) { recordItemList ->
-            val sortedList = recordItemList
-                .sortedWith(compareByDescending<LocalRecordItem> { it.numberOfMines.toDouble() / it.fieldSize.toDouble() }
-                .thenBy {it.timeInSeconds})
-            initRecyclerView(sortedList)
+        gameBoardViewModel.rankedRecords.observe(viewLifecycleOwner) { records ->
+            adapter.submit(records)
+            emptyView.visibility = if (records.isEmpty()) View.VISIBLE else View.GONE
         }
-    }
-
-    private fun bindViews(view: View) {
-        recordsRecyclerview = view.findViewById(R.id.records_recyclerview)
-    }
-
-    private fun initRecyclerView(dataSet: List<LocalRecordItem>) {
-        layoutManager = LinearLayoutManager(activity)
-        layoutManager.orientation = LinearLayoutManager.VERTICAL
-        recordsRecyclerview.layoutManager = layoutManager
-        recordsRecyclerview.adapter = PersonalRecordsAdapter(dataSet)
     }
 }

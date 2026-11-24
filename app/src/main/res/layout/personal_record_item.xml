@@ -9,8 +9,9 @@
 
     <TextView
         android:id="@+id/record_number"
-        android:layout_width="25dp"
-        android:layout_height="25dp"
+        android:layout_width="wrap_content"
+        android:minWidth="25dp"
+        android:layout_height="wrap_content"
         android:padding="2dp"
         android:textColor="@color/text_color"
         android:textSize="19dp"

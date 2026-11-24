@@ -3,7 +3,8 @@ package com.msmikeescom.minesweeper.viewmodel
 import android.content.Context
 import android.os.SystemClock
 import android.util.Log
-import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.map
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.auth
@@ -13,6 +14,7 @@ import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.DatabaseException
 import com.google.firebase.Firebase
 import com.msmikeescom.minesweeper.game.Board
+import com.msmikeescom.minesweeper.game.RecordRanking
 import com.msmikeescom.minesweeper.repository.MainRepository
 import com.msmikeescom.minesweeper.repository.local.database.dto.LocalRecordItem
 import com.msmikeescom.minesweeper.repository.remote.realtimedatabase.model.RemoteRecordItem
@@ -29,7 +31,10 @@ class GameBoardViewModel : ViewModel() {
     /** Firebase Auth uid of the signed-in player; records are stored under it. */
     private var userId: String? = null
 
-    var allRecordItems = MutableLiveData<List<LocalRecordItem>>()
+    /** The player's records, best first, updated as new ones are saved or synced. */
+    val rankedRecords: LiveData<List<LocalRecordItem>> by lazy {
+        mainRepository.observeAllRecords().map { RecordRanking.rank(it) }
+    }
 
     /** Current round. Kept here so it survives configuration changes. */
     var board: Board? = null
@@ -134,9 +139,4 @@ class GameBoardViewModel : ViewModel() {
         Log.d(TAG, "setNewRecord: saved as $key")
     }
 
-    fun fetchAllRecords() {
-        viewModelScope.launch {
-            allRecordItems.value = mainRepository.loadAllRecords()
-        }
-    }
 }

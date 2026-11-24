@@ -16,6 +16,7 @@ import androidx.annotation.DrawableRes
 import androidx.core.view.doOnLayout
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import androidx.navigation.fragment.findNavController
 import com.bumptech.glide.Glide
 import com.msmikeescom.minesweeper.R
 import com.msmikeescom.minesweeper.game.Board
@@ -136,6 +137,7 @@ class MineFieldFragment : Fragment() {
         popup.setOnMenuItemClickListener { menuItem ->
             when (menuItem.itemId) {
                 R.id.numberOfMines -> showEditNumberOfMinesDialog()
+                R.id.action_records -> findNavController().navigate(R.id.action_mineFieldFragment_to_personalRecordsFragment)
                 R.id.action_logout -> listener.logOut()
             }
             true
