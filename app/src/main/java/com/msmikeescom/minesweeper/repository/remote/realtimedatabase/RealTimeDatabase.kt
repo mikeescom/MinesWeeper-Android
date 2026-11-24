@@ -3,8 +3,8 @@ package com.msmikeescom.minesweeper.repository.remote.realtimedatabase
 import android.util.Log
 import com.google.firebase.database.ChildEventListener
 import com.google.firebase.database.DatabaseException
-import com.google.firebase.database.ktx.database
-import com.google.firebase.ktx.Firebase
+import com.google.firebase.Firebase
+import com.google.firebase.database.database
 import com.msmikeescom.minesweeper.repository.remote.realtimedatabase.model.RemoteRecordItem
 
 /**
