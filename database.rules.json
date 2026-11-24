@@ -1,0 +1,18 @@
+{
+  "rules": {
+    "users": {
+      "$uid": {
+        ".read": "auth != null && (auth.uid === $uid || auth.token.firebase.identities['google.com'][0] === $uid)",
+        ".write": "auth != null && auth.uid === $uid",
+        "$recordId": {
+          ".validate": "newData.hasChildren(['numberOfMines', 'fieldSize', 'timeInSeconds', 'timeStamp'])",
+          "numberOfMines": { ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 999" },
+          "fieldSize": { ".validate": "newData.isNumber() && newData.val() >= 2" },
+          "timeInSeconds": { ".validate": "newData.isNumber() && newData.val() >= 0" },
+          "timeStamp": { ".validate": "newData.isNumber() && newData.val() <= now" },
+          "$other": { ".validate": false }
+        }
+      }
+    }
+  }
+}

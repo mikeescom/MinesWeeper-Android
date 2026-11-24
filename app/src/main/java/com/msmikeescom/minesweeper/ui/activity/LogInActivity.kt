@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.util.Log
 import android.view.*
 import android.widget.ProgressBar
+import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
@@ -109,28 +110,32 @@ class LogInActivity : AppCompatActivity(), ILogInUIListener {
 
     private fun handleGoogleSignInResult(completedTask: Task<GoogleSignInAccount>) {
         Log.d(TAG, "handleGoogleSignInResult")
-        try {
-            navigateToMineField(completedTask.getResult(ApiException::class.java))
+        val account = try {
+            completedTask.getResult(ApiException::class.java)
         } catch (e: ApiException) {
             Log.e(TAG, "handleGoogleSignInResult:failed code= ${e.statusCode}")
+            return
+        }
+        showProgress()
+        logInViewModel.signInToFirebase(account).addOnCompleteListener(this) { task ->
+            if (task.isSuccessful) {
+                navigateToMineField(account)
+            } else {
+                Log.e(TAG, "handleGoogleSignInResult: Firebase sign-in failed", task.exception)
+                hideProgress()
+                Toast.makeText(this, R.string.login_failed, Toast.LENGTH_LONG).show()
+            }
         }
     }
 
     override fun navigateToMineField(googleSignInAccount: GoogleSignInAccount?) {
         Log.d(TAG, "navigateToMineField")
-        googleSignInAccount?.let {
-            logInViewModel.saveUserInfo(it)
-        }
+        logInViewModel.saveUserInfo(googleSignInAccount)
         startActivityForResult(Intent(this, GameBoardActivity::class.java), RC_SIGN_OUT)
     }
 
     private fun logOut() {
-        if (logInViewModel.getPasswordSignInUser()?.currentUser != null) {
-            logInViewModel.getPasswordSignInUser()?.signOut()
-        } else {
-            logInViewModel.getGoogleSignInClient(this).signOut()
-        }
-        logInViewModel.deleteUserInfo()
+        logInViewModel.logOut(this)
         findNavController(R.id.nav_host_fragment).navigate(R.id.loginFragment)
     }
 

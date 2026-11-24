@@ -50,23 +50,41 @@ class LoginFragment : Fragment() {
         logInViewModel = ViewModelProvider(logInActivity)[LogInViewModel::class.java]
 
         val googleSignInAccount = logInViewModel.getLastSignedInAccount(logInActivity)
-        val passwordSignInAccount = logInViewModel.getPasswordSignInUser()?.currentUser
 
         when {
-            googleSignInAccount != null -> {
-                Log.d(TAG, "onViewCreated: Google signing account was found. Navigate to Game Board")
+            logInViewModel.currentUser() != null -> {
+                Log.d(TAG, "onViewCreated: Firebase user was found. Navigate to Game Board")
                 listener.navigateToMineField(googleSignInAccount)
             }
-            passwordSignInAccount != null -> {
-                Log.d(TAG, "onViewCreated: Password signing account was found. Navigate to Game Board")
-                listener.navigateToMineField()
+            googleSignInAccount != null -> {
+                // Signed in to Google by an older version, which never signed in to Firebase.
+                Log.d(TAG, "onViewCreated: Google account without Firebase user. Signing in silently")
+                signInSilentlyWithGoogle(view)
             }
             else -> {
-                Log.d(TAG, "onViewCreated: No Google or Password signing accounts were found. Show login view")
-                initViews(view)
-                listener.onHideProgressBar()
+                Log.d(TAG, "onViewCreated: No signed-in user was found. Show login view")
+                showLoginViews(view)
             }
         }
+    }
+
+    private fun showLoginViews(view: View) {
+        initViews(view)
+        listener.onHideProgressBar()
+    }
+
+    private fun signInSilentlyWithGoogle(view: View) {
+        logInViewModel.getGoogleSignInClient(logInActivity).silentSignIn()
+            .continueWithTask { task -> logInViewModel.signInToFirebase(task.result) }
+            .addOnCompleteListener(logInActivity) { task ->
+                if (this.view == null) return@addOnCompleteListener // Fragment left the screen
+                if (task.isSuccessful) {
+                    listener.navigateToMineField(logInViewModel.getLastSignedInAccount(logInActivity))
+                } else {
+                    Log.w(TAG, "signInSilentlyWithGoogle failed", task.exception)
+                    showLoginViews(view)
+                }
+            }
     }
 
     private fun initViews(view: View) {
@@ -102,14 +120,14 @@ class LoginFragment : Fragment() {
         val email = emailEditText.text.toString()
         val password = passwordEditText.text.toString()
         if (email.isNotEmpty() && password.isNotEmpty()) {
-            logInViewModel.getPasswordSignInUser()
-                ?.signInWithEmailAndPassword(email, password)
-                ?.addOnCompleteListener(logInActivity) { task ->
+            logInViewModel.auth
+                .signInWithEmailAndPassword(email, password)
+                .addOnCompleteListener(logInActivity) { task ->
                     if (task.isSuccessful) {
                         Log.d(TAG, "signInWithPassword: Success Login. Navigate to Game Board")
                         listener.navigateToMineField()
                     } else {
-                        Log.e(TAG, "signInWithPassword: A required field is empty")
+                        Log.e(TAG, "signInWithPassword: Sign-in failed", task.exception)
                         AlertDialogUtil.showInvalidCredentialsDialog(logInActivity) { dialogInterface, _ ->
                             dialogInterface.dismiss()
                         }
@@ -127,15 +145,15 @@ class LoginFragment : Fragment() {
         Log.d(TAG, "sendResetPasswordLink")
         val email = emailEditText.text.toString()
         if (email.isNotEmpty()) {
-            logInViewModel.getPasswordSignInUser()
-                ?.sendPasswordResetEmail(email)
-                ?.addOnSuccessListener {
+            logInViewModel.auth
+                .sendPasswordResetEmail(email)
+                .addOnSuccessListener {
                     Log.d(TAG, "sendResetPasswordLink: Reset password link was sent.")
                     emailEditText.setText("")
                     passwordEditText.setText("")
                     ToastUtil.showResetLinkSentToast(logInActivity)
                 }
-                ?.addOnFailureListener {
+                .addOnFailureListener {
                     AlertDialogUtil.showErrorSendingResetLinkDialog(logInActivity) { dialogInterface, _ ->
                         dialogInterface.dismiss()
                     }

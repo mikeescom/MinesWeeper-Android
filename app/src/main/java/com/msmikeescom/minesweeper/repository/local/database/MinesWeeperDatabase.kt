@@ -15,16 +15,17 @@ abstract class MinesWeeperDatabase : RoomDatabase() {
     companion object {
         private const val TAG = "MinesWeeperDatabase"
         private const val DATABASE_NAME = "minesweeperdatabase"
+        @Volatile
         private var mInstance: MinesWeeperDatabase? = null
 
-        fun instance(context: Context): MinesWeeperDatabase {
-            if (mInstance == null) {
-                mInstance = Room.databaseBuilder(context.applicationContext, MinesWeeperDatabase::class.java, DATABASE_NAME)
+        fun instance(context: Context): MinesWeeperDatabase =
+            mInstance ?: synchronized(this) {
+                mInstance ?: Room.databaseBuilder(context.applicationContext, MinesWeeperDatabase::class.java, DATABASE_NAME)
                     .fallbackToDestructiveMigrationFrom(1).build()
-                Log.d(TAG, "initialized")
+                    .also {
+                        mInstance = it
+                        Log.d(TAG, "initialized")
+                    }
             }
-
-            return mInstance!!
-        }
     }
 }
