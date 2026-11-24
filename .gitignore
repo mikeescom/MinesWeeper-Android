@@ -12,7 +12,6 @@
 /.idea/navEditor.xml
 /.idea/compiler.xml
 /.idea/jarRepositories.xml
-/gradle/wrapper/gradle-wrapper.properties
 /.idea/assetWizardSettings.xml
 .DS_Store
 /build

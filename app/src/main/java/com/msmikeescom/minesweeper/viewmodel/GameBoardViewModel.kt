@@ -1,6 +1,7 @@
 package com.msmikeescom.minesweeper.viewmodel
 
 import android.content.Context
+import android.os.SystemClock
 import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -15,6 +16,7 @@ import com.google.firebase.database.ChildEventListener
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.ktx.Firebase
+import com.msmikeescom.minesweeper.game.Board
 import com.msmikeescom.minesweeper.repository.MainRepository
 import com.msmikeescom.minesweeper.repository.local.database.MinesWeeperDatabase
 import com.msmikeescom.minesweeper.repository.local.database.dto.LocalRecordItem
@@ -22,7 +24,6 @@ import com.msmikeescom.minesweeper.repository.local.sharepreferences.MinesWeeper
 import com.msmikeescom.minesweeper.repository.remote.realtimedatabase.RealTimeDatabase
 import com.msmikeescom.minesweeper.repository.remote.realtimedatabase.model.RemoteRecordItem
 import com.msmikeescom.minesweeper.utilities.Security
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -38,10 +39,43 @@ class GameBoardViewModel : ViewModel() {
     private var passwordSignInUser: FirebaseUser? = null // Password login
     private var googleSignInUser: GoogleSignInAccount? = null // Google login
     private lateinit var mainRepository: MainRepository
-    private val _isLoading = MutableStateFlow(true);
-    val isLoading = _isLoading.asStateFlow();
+    private val _isLoading = MutableStateFlow(true)
+    val isLoading = _isLoading.asStateFlow()
 
     var allRecordItems = MutableLiveData<List<LocalRecordItem>>()
+
+    /** Current round. Kept here so it survives configuration changes. */
+    var board: Board? = null
+        private set
+
+    /** [SystemClock.elapsedRealtime] when the timer started, or null if not started yet. */
+    var timerStartedAt: Long? = null
+        private set
+
+    private var timerStoppedAt: Long? = null
+
+    val isTimerRunning: Boolean
+        get() = timerStartedAt != null && timerStoppedAt == null
+
+    fun newGame(width: Int, height: Int, numberOfMines: Int): Board {
+        timerStartedAt = null
+        timerStoppedAt = null
+        return Board(width, height, numberOfMines).also { board = it }
+    }
+
+    fun startTimer() {
+        if (timerStartedAt == null) timerStartedAt = SystemClock.elapsedRealtime()
+    }
+
+    fun stopTimer() {
+        if (timerStartedAt != null && timerStoppedAt == null) timerStoppedAt = SystemClock.elapsedRealtime()
+    }
+
+    fun elapsedSeconds(): Int {
+        val start = timerStartedAt ?: return 0
+        val end = timerStoppedAt ?: SystemClock.elapsedRealtime()
+        return ((end - start) / 1000).toInt()
+    }
 
     init {
         viewModelScope.launch {
@@ -87,12 +121,16 @@ class GameBoardViewModel : ViewModel() {
         }
     }
 
-    fun initViewModel(context: Context) = viewModelScope.launch(
-        Dispatchers.Default) {
+    /**
+     * Sets up the repository synchronously so it is ready before any fragment reads from it.
+     * Safe to call again after the activity is recreated.
+     */
+    fun initViewModel(context: Context) {
+        if (::mainRepository.isInitialized) return
         Log.d(TAG, "initViewModel")
         try {
             mainRepository = MainRepository(
-                sharePreferences = MinesWeeperSharedPreferences.instance(context),
+                sharePreferences = MinesWeeperSharedPreferences.instance(context.applicationContext),
                 database = MinesWeeperDatabase.instance(context),
                 realTimeDatabase = RealTimeDatabase.instance()
             )

@@ -1,12 +1,8 @@
 package com.msmikeescom.minesweeper.ui.fragment
 
 import android.os.Bundle
-import android.os.Handler
 import android.text.InputType
-import android.util.DisplayMetrics
 import android.util.Log
-import android.util.TypedValue
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.MenuInflater
 import android.view.View
@@ -16,28 +12,31 @@ import android.widget.GridLayout
 import android.widget.ImageView
 import android.widget.PopupMenu
 import android.widget.Toast
-import androidx.core.content.res.ResourcesCompat
+import androidx.annotation.DrawableRes
+import androidx.core.view.doOnLayout
+import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
-import androidx.navigation.NavOptions
-import androidx.navigation.fragment.findNavController
 import com.bumptech.glide.Glide
 import com.msmikeescom.minesweeper.R
-import com.msmikeescom.minesweeper.model.FieldObject
+import com.msmikeescom.minesweeper.game.Board
+import com.msmikeescom.minesweeper.game.Board.CellState
 import com.msmikeescom.minesweeper.repository.local.database.dto.LocalRecordItem
 import com.msmikeescom.minesweeper.ui.activity.GameBoardActivity
-import com.msmikeescom.minesweeper.ui.view.GameChronometerView
 import com.msmikeescom.minesweeper.ui.activity.IGameBoardUIListener
+import com.msmikeescom.minesweeper.ui.view.GameChronometerView
 import com.msmikeescom.minesweeper.ui.view.MinesCounterView
 import com.msmikeescom.minesweeper.utilities.AlertDialogUtil
 import com.msmikeescom.minesweeper.utilities.Constants
-import com.msmikeescom.minesweeper.utilities.Constants.SQUARE_SIZE
-import com.msmikeescom.minesweeper.utilities.Constants.TIMER_BAR_SIZE
 import com.msmikeescom.minesweeper.viewmodel.GameBoardViewModel
-import java.util.*
 
+/**
+ * Draws the current [Board] and forwards taps to it. All game rules live in [Board]; the board
+ * and timer are kept in [GameBoardViewModel] so a game survives configuration changes.
+ */
 class MineFieldFragment : Fragment() {
     companion object {
         private const val TAG = "MineFieldFragment"
+        private const val FACE_RESET_DELAY_MS = 500L
     }
 
     private lateinit var gameBoardViewModel: GameBoardViewModel
@@ -49,19 +48,19 @@ class MineFieldFragment : Fragment() {
         ANGRY, HAPPY, KILLED, SCARED, SMILE
     }
 
-    private var mMinesFound = 0
-    private var mDefaultNumberOfMines = 0
-    private var mCounterNumberOfMines = 0
-    private var mHorizontalSize = 0
-    private var mVerticalSize = 0
+    /** Board dimensions that fit the available space, measured once the layout is done. */
+    private var fittedWidth = 0
+    private var fittedHeight = 0
 
-    private var mFieldObjects = emptyArray<Array<FieldObject?>>()
+    private var squareImages = emptyArray<ImageView>()
 
     private lateinit var mGameChronometerView: GameChronometerView
     private lateinit var minesCounterView: MinesCounterView
-    private lateinit var mMineFiled: GridLayout
+    private lateinit var mMineField: GridLayout
     private lateinit var mFace: ImageView
     private lateinit var mUserPhoto: ImageView
+
+    private val resetFace = Runnable { mFace.setImageResource(R.drawable.smile) }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_mine_filed, container, false)
@@ -72,9 +71,9 @@ class MineFieldFragment : Fragment() {
         listener = gameBoardActivity
         listener.onHideProgress()
 
-        initView(view)
-
         gameBoardViewModel = ViewModelProvider(gameBoardActivity)[GameBoardViewModel::class.java]
+
+        initView(view)
 
         gameBoardViewModel.getUserPhotoUrl()?.let { photoUrl ->
             Glide.with(this)
@@ -83,103 +82,46 @@ class MineFieldFragment : Fragment() {
                 .into(mUserPhoto)
         }
 
-        initGame()
-    }
+        // Size the board from the space the layout actually gives it.
+        val container = view.findViewById<View>(R.id.mine_field_container)
+        container.doOnLayout {
+            val squareSize = resources.getDimensionPixelSize(R.dimen.square_size)
+            val bottomMargin = (mMineField.layoutParams as ViewGroup.MarginLayoutParams).bottomMargin
+            fittedWidth = (it.width / squareSize).coerceAtLeast(2)
+            fittedHeight = ((it.height - bottomMargin) / squareSize).coerceAtLeast(2)
+            Log.d(TAG, "Mine field fits ${fittedWidth}x$fittedHeight squares")
 
-    private fun initGame() {
-        setNumberOfMines()
-        setMineFieldSize()
-        initFieldObjectsArray()
-        buildMineFiled()
-        initMineField()
-    }
-
-    private fun setNumberOfMines() {
-        gameBoardViewModel.getNumberOfMines()?.let { numberOfMines ->
-            mDefaultNumberOfMines = numberOfMines.takeIf { it > 0 } ?: kotlin.run { Constants.DEFAULT_LEVEL_NUMBER_MINES }
-            mCounterNumberOfMines = mDefaultNumberOfMines
-        } ?: kotlin.run {
-            mDefaultNumberOfMines = Constants.DEFAULT_LEVEL_NUMBER_MINES
-            mCounterNumberOfMines = Constants.DEFAULT_LEVEL_NUMBER_MINES
-        }
-        gameBoardViewModel.saveNumberOfMines(mDefaultNumberOfMines)
-        minesCounterView.updateCounter(mCounterNumberOfMines)
-    }
-
-    private fun setMineFieldSize() {
-        // Calculate ActionBar height
-        val tv = TypedValue()
-        val actionBarHeight = if (gameBoardActivity.theme.resolveAttribute(android.R.attr.actionBarSize, tv, true)) {
-            TypedValue.complexToDimensionPixelSize(tv.data, resources.displayMetrics)
-        } else 0
-        Log.d(TAG, "ActionBar height: $actionBarHeight")
-
-        // Calculate timer's bar
-        val timerBarSize = (TIMER_BAR_SIZE * resources.displayMetrics.density).toInt()
-        Log.d(TAG, "Timer bar size: $timerBarSize")
-
-        // Calculate square size
-        val squareSize = (SQUARE_SIZE * resources.displayMetrics.density).toInt()
-        Log.d(TAG, "Square size: $squareSize")
-
-        // Calculate screen width and height
-        val displayMetrics = DisplayMetrics()
-        gameBoardActivity.windowManager.defaultDisplay.getMetrics(displayMetrics)
-        val screenHeight = displayMetrics.heightPixels
-        val screenWidth = displayMetrics.widthPixels
-
-        // Calculate mine filed width and height
-        val mineFieldHeight = ((screenHeight - timerBarSize) / squareSize)
-        val mineFieldWidth = screenWidth / squareSize
-        mVerticalSize = mineFieldHeight.minus(1)
-        mHorizontalSize = mineFieldWidth
-        gameBoardViewModel.saveFieldSize(mineFieldHeight * mineFieldWidth)
-        Log.d(TAG, "Screen Size (height = $screenHeight, width = $screenWidth)")
-        Log.d(TAG, "Mine Filed Size (height = $mineFieldHeight, width = $mineFieldWidth)")
-        mFieldObjects = Array(mHorizontalSize) { arrayOfNulls(mVerticalSize) }
-    }
-
-    private fun initFieldObjectsArray() {
-        for (j in 0 until mVerticalSize) {
-            for (i in 0 until mHorizontalSize) {
-                mFieldObjects[i][j] = FieldObject(null, Constants.EMPTY)
+            // Keep a game in progress; a game nobody has tapped yet is resized to the new space.
+            val existing = gameBoardViewModel.board
+            val fits = existing != null && existing.width == fittedWidth && existing.height == fittedHeight
+            if (existing != null && (fits || existing.status != Board.Status.READY)) {
+                showBoard(existing)
+            } else {
+                startNewGame()
             }
         }
     }
 
-    private fun buildMineFiled() {
-        val rand = Random()
-        var xMinePos: Int
-        var yMinePos: Int
-        var i = 0
-        while (i < mCounterNumberOfMines) {
-            xMinePos = rand.nextInt(mHorizontalSize)
-            yMinePos = rand.nextInt(mVerticalSize)
-            if (mFieldObjects[xMinePos][yMinePos]?.squareImageToShow != Constants.MINE) {
-                mFieldObjects[xMinePos][yMinePos] = FieldObject(null, Constants.MINE)
-                i++
-                Log.d(TAG, "Mine set up at: [$xMinePos, $yMinePos]")
-            }
-        }
-        setUpFieldNumbers()
+    override fun onDestroyView() {
+        mFace.removeCallbacks(resetFace)
+        super.onDestroyView()
     }
 
     private fun initView(view: View) {
         mGameChronometerView = view.findViewById(R.id.chronometer)
         minesCounterView = view.findViewById(R.id.mines_counter)
-        mMineFiled = view.findViewById(R.id.mine_field)
-        mMineFiled.removeAllViews()
+        mMineField = view.findViewById(R.id.mine_field)
+        mMineField.removeAllViews()
         mFace = view.findViewById(R.id.face)
         mUserPhoto = view.findViewById(R.id.user_photo)
         mUserPhoto.setOnClickListener {
             showAccountOptionsPopup(it)
         }
-        setFaceImage(FaceType.HAPPY, true)
         mFace.setOnClickListener {
             AlertDialogUtil.showGameWillBeRestartedDialog(requireContext(),
                 { dialog, _ ->
                     dialog.dismiss()
-                    restartGamingBoard()
+                    startNewGame()
                 },
                 { dialog, _ ->
                     dialog.dismiss()
@@ -192,281 +134,184 @@ class MineFieldFragment : Fragment() {
         val inflater: MenuInflater = popup.menuInflater
         inflater.inflate(R.menu.menu_account_settings, popup.menu)
         popup.setOnMenuItemClickListener { menuItem ->
-            when(menuItem.itemId){
-                R.id.numberOfMines-> {
-                    val editText = EditText(context).also {
-                        it.inputType = InputType.TYPE_CLASS_NUMBER
-                    }
-                    AlertDialogUtil.showEditNumberOfMinesDialog(requireContext(),
-                        editText,
-                        { dialog, _ ->
-                            if (editText.text.toString().isNotEmpty()) {
-                                dialog.dismiss()
-                                val numberOfMines = editText.text.toString().toInt()
-                                gameBoardViewModel.saveNumberOfMines(numberOfMines)
-                                restartGamingBoard()
-                            } else {
-                                // TODO: Toast
-                            }
-                        },
-                        { dialog, _ ->
-                            dialog.dismiss()
-                        })
-                    //findNavController().navigate(R.id.action_mineFieldFragment_to_settingsFragment)
-                }
-                //R.id.personalRecordsFragment-> {
-                //    findNavController().navigate(R.id.action_mineFieldFragment_to_personalRecordsFragment)
-                //}
-                R.id.action_logout-> {
-                    listener.logOut()
-                }
+            when (menuItem.itemId) {
+                R.id.numberOfMines -> showEditNumberOfMinesDialog()
+                R.id.action_logout -> listener.logOut()
             }
             true
         }
         popup.show()
     }
 
-    private fun setUpFieldNumbers() {
-        for (j in 0 until mVerticalSize) {
-            for (i in 0 until mHorizontalSize) {
-                if (mFieldObjects[i][j]?.squareImageToShow == Constants.MINE) {
-                    if (i - 1 >= 0 && j - 1 >= 0 && mFieldObjects[i - 1][j - 1]?.squareImageToShow != Constants.MINE) { //Start Top position
-                        mFieldObjects[i - 1][j - 1]?.squareImageToShow = mFieldObjects[i - 1][j - 1]?.squareImageToShow?.let { it + 1 } ?: 0
-                    }
-                    if (i - 1 >= 0 && mFieldObjects[i - 1][j]?.squareImageToShow != Constants.MINE) { //Start position
-                        mFieldObjects[i - 1][j]?.squareImageToShow = mFieldObjects[i - 1][j]?.squareImageToShow?.let { it + 1 } ?: 0
-                    }
-                    if (i - 1 >= 0 && j + 1 < mVerticalSize && mFieldObjects[i - 1][j + 1]?.squareImageToShow != Constants.MINE) { //Start Bottom position
-                        mFieldObjects[i - 1][j + 1]?.squareImageToShow = mFieldObjects[i - 1][j + 1]?.squareImageToShow?.let { it + 1 } ?: 0
-                    }
-                    if (j - 1 >= 0 && mFieldObjects[i][j - 1]?.squareImageToShow != Constants.MINE) { //Top position
-                        mFieldObjects[i][j - 1]?.squareImageToShow = mFieldObjects[i][j - 1]?.squareImageToShow?.let { it + 1 } ?: 0
-                    }
-                    if (i + 1 < mHorizontalSize && j - 1 >= 0 && mFieldObjects[i + 1][j - 1]?.squareImageToShow != Constants.MINE) { //Top End position
-                        mFieldObjects[i + 1][j - 1]?.squareImageToShow = mFieldObjects[i + 1][j - 1]?.squareImageToShow?.let { it + 1 } ?: 0
-                    }
-                    if (i + 1 < mHorizontalSize && mFieldObjects[i + 1][j]?.squareImageToShow != Constants.MINE) { //End position
-                        mFieldObjects[i + 1][j]?.squareImageToShow = mFieldObjects[i + 1][j]?.squareImageToShow?.let { it + 1 } ?: 0
-                    }
-                    if (i + 1 < mHorizontalSize && j + 1 < mVerticalSize && mFieldObjects[i + 1][j + 1]?.squareImageToShow != Constants.MINE) { //End Bottom position
-                        mFieldObjects[i + 1][j + 1]?.squareImageToShow = mFieldObjects[i + 1][j + 1]?.squareImageToShow?.let { it + 1 } ?: 0
-                    }
-                    if (j + 1 < mVerticalSize && mFieldObjects[i][j + 1]?.squareImageToShow != Constants.MINE) { //Bottom position
-                        mFieldObjects[i][j + 1]?.squareImageToShow = mFieldObjects[i][j + 1]?.squareImageToShow?.let { it + 1 } ?: 0
+    private fun showEditNumberOfMinesDialog() {
+        val maxMines = Board.maxMines(fittedWidth, fittedHeight)
+        val editText = EditText(requireContext()).also {
+            it.inputType = InputType.TYPE_CLASS_NUMBER
+        }
+        AlertDialogUtil.showEditNumberOfMinesDialog(requireContext(),
+            editText,
+            { dialog, _ ->
+                dialog.dismiss()
+                val text = editText.text.toString()
+                val numberOfMines = text.toIntOrNull()
+                when {
+                    text.isEmpty() -> showToast(getString(R.string.settings_no_mines_entered))
+                    numberOfMines == null || numberOfMines !in 1..maxMines ->
+                        showToast(getString(R.string.settings_invalid_number_of_mines, maxMines))
+                    else -> {
+                        gameBoardViewModel.saveNumberOfMines(numberOfMines)
+                        startNewGame()
                     }
                 }
+            },
+            { dialog, _ ->
+                dialog.dismiss()
+            })
+    }
+
+    private fun showToast(message: String) {
+        Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show()
+    }
+
+    private fun startNewGame() {
+        if (fittedWidth == 0 || fittedHeight == 0) return
+        val maxMines = Board.maxMines(fittedWidth, fittedHeight)
+        val numberOfMines = (gameBoardViewModel.getNumberOfMines()?.takeIf { it > 0 }
+            ?: Constants.DEFAULT_LEVEL_NUMBER_MINES).coerceAtMost(maxMines)
+        gameBoardViewModel.saveNumberOfMines(numberOfMines)
+        gameBoardViewModel.saveFieldSize(fittedWidth * fittedHeight)
+        showBoard(gameBoardViewModel.newGame(fittedWidth, fittedHeight, numberOfMines))
+    }
+
+    /** Builds the grid for [board] and draws its current state. */
+    private fun showBoard(board: Board) {
+        mMineField.removeAllViews()
+        mMineField.columnCount = board.width
+        mMineField.orientation = GridLayout.HORIZONTAL
+        squareImages = Array(board.width * board.height) { i ->
+            val x = i % board.width
+            val y = i / board.width
+            val squareView = layoutInflater.inflate(R.layout.square_layout, mMineField, false)
+            mMineField.addView(squareView)
+            squareView.setOnClickListener { onSquareClicked(board, x, y) }
+            squareView.setOnLongClickListener { onSquareLongClicked(board, x, y) }
+            squareView.findViewById<ImageView>(R.id.image_button)
+        }
+        for (y in 0 until board.height) {
+            for (x in 0 until board.width) {
+                renderSquare(board, x, y)
+            }
+        }
+        minesCounterView.updateCounter(board.flagsRemaining)
+
+        mFace.removeCallbacks(resetFace)
+        when (board.status) {
+            Board.Status.WON -> setFaceImage(FaceType.HAPPY, false)
+            Board.Status.LOST -> setFaceImage(FaceType.KILLED, false)
+            else -> setFaceImage(FaceType.HAPPY, true)
+        }
+        val startedAt = gameBoardViewModel.timerStartedAt
+        if (gameBoardViewModel.isTimerRunning && startedAt != null) {
+            mGameChronometerView.start(startedAt)
+        } else {
+            mGameChronometerView.stop(gameBoardViewModel.elapsedSeconds())
+        }
+    }
+
+    private fun onSquareClicked(board: Board, x: Int, y: Int) {
+        if (board.isOver || board.state(x, y) != CellState.COVERED) return
+        val changed = board.reveal(x, y)
+        changed.forEach { renderSquare(board, it.x, it.y) }
+
+        when (board.status) {
+            Board.Status.LOST -> onGameLost()
+            Board.Status.WON -> onGameWon(board)
+            else -> {
+                setFaceImage(FaceType.SCARED, true)
+                startTimer()
             }
         }
     }
 
-    private fun unCoverEmptySquares(xPos: Int, yPos: Int) {
-        if (xPos - 1 >= 0 && yPos - 1 >= 0 && mFieldObjects[xPos - 1][yPos - 1]?.squareImageToShow != Constants.MINE &&
-            mFieldObjects[xPos - 1][yPos - 1]?.isCovered == true) { //Start Top position
-            unCoverSquare(xPos - 1, yPos - 1)
-            if (!isNumberOrMineSquare(mFieldObjects[xPos - 1][yPos - 1]?.squareImageToShow)) {
-                unCoverEmptySquares(xPos - 1, yPos - 1)
-            }
+    private fun onSquareLongClicked(board: Board, x: Int, y: Int): Boolean {
+        val wasFlagged = board.state(x, y) == CellState.FLAGGED
+        if (!board.toggleFlag(x, y)) return true
+        renderSquare(board, x, y)
+        minesCounterView.updateCounter(board.flagsRemaining)
+        if (board.status == Board.Status.WON) {
+            onGameWon(board)
+        } else {
+            setFaceImage(if (wasFlagged) FaceType.ANGRY else FaceType.SCARED, true)
         }
-        if (xPos - 1 >= 0 && mFieldObjects[xPos - 1][yPos]?.squareImageToShow != Constants.MINE &&
-            mFieldObjects[xPos - 1][yPos]?.isCovered == true) { //Start position
-            unCoverSquare(xPos - 1, yPos)
-            if (!isNumberOrMineSquare(mFieldObjects[xPos - 1][yPos]?.squareImageToShow)) {
-                unCoverEmptySquares(xPos - 1, yPos)
-            }
-        }
-        if (xPos - 1 >= 0 && yPos + 1 < mVerticalSize && mFieldObjects[xPos - 1][yPos + 1]?.squareImageToShow != Constants.MINE &&
-            mFieldObjects[xPos - 1][yPos + 1]?.isCovered == true) { //Start Bottom position
-            unCoverSquare(xPos - 1, yPos + 1)
-            if (!isNumberOrMineSquare(mFieldObjects[xPos - 1][yPos + 1]?.squareImageToShow)) {
-                unCoverEmptySquares(xPos - 1, yPos + 1)
-            }
-        }
-        if (yPos - 1 >= 0 && mFieldObjects[xPos][yPos - 1]?.squareImageToShow != Constants.MINE &&
-            mFieldObjects[xPos][yPos - 1]?.isCovered == true) { //Top position
-            unCoverSquare(xPos, yPos - 1)
-            if (!isNumberOrMineSquare(mFieldObjects[xPos][yPos - 1]?.squareImageToShow)) {
-                unCoverEmptySquares(xPos, yPos - 1)
-            }
-        }
-        if (xPos + 1 < mHorizontalSize && yPos - 1 >= 0 && mFieldObjects[xPos + 1][yPos - 1]?.squareImageToShow != Constants.MINE &&
-            mFieldObjects[xPos + 1][yPos - 1]?.isCovered == true) { //Top End position
-            unCoverSquare(xPos + 1, yPos - 1)
-            if (!isNumberOrMineSquare(mFieldObjects[xPos + 1][yPos - 1]?.squareImageToShow)) {
-                unCoverEmptySquares(xPos + 1, yPos - 1)
-            }
-        }
-        if (xPos + 1 < mHorizontalSize && mFieldObjects[xPos + 1][yPos]?.squareImageToShow != Constants.MINE &&
-            mFieldObjects[xPos + 1][yPos]?.isCovered == true) { //End position
-            unCoverSquare(xPos + 1, yPos)
-            if (!isNumberOrMineSquare(mFieldObjects[xPos + 1][yPos]?.squareImageToShow)) {
-                unCoverEmptySquares(xPos + 1, yPos)
-            }
-        }
-        if (xPos + 1 < mHorizontalSize && yPos + 1 < mVerticalSize && mFieldObjects[xPos + 1][yPos + 1]?.squareImageToShow != Constants.MINE &&
-            mFieldObjects[xPos + 1][yPos + 1]?.isCovered == true) { //End Bottom position
-            unCoverSquare(xPos + 1, yPos + 1)
-            if (!isNumberOrMineSquare(mFieldObjects[xPos + 1][yPos + 1]?.squareImageToShow)) {
-                unCoverEmptySquares(xPos + 1, yPos + 1)
-            }
-        }
-        if (yPos + 1 < mVerticalSize && mFieldObjects[xPos][yPos + 1]?.squareImageToShow != Constants.MINE &&
-            mFieldObjects[xPos][yPos + 1]?.isCovered == true) { //Bottom position
-            unCoverSquare(xPos, yPos + 1)
-            if (!isNumberOrMineSquare(mFieldObjects[xPos][yPos + 1]?.squareImageToShow)) {
-                unCoverEmptySquares(xPos, yPos + 1)
-            }
-        }
+        return true
     }
 
-    private fun isNumberOrMineSquare(imageToShow: Int?): Boolean {
-        return when (imageToShow) {
-            Constants.MINE,
-            Constants.ONE,
-            Constants.TWO,
-            Constants.THREE,
-            Constants.FOUR,
-            Constants.FIVE,
-            Constants.SIX,
-            Constants.SEVEN,
-            Constants.EIGHT -> true
-            else -> false
-        }
+    private fun startTimer() {
+        gameBoardViewModel.startTimer()
+        gameBoardViewModel.timerStartedAt?.let { mGameChronometerView.start(it) }
     }
 
-    private fun unCoverSquare(x: Int, y: Int) {
-        mFieldObjects[x][y]?.isCovered = false
-        (mFieldObjects[x][y]?.squareView?.findViewById<View>(R.id.image_button) as ImageView).setImageDrawable(
-            ResourcesCompat.getDrawable(resources, getResourceId(x, y), null))
+    private fun stopTimer() {
+        gameBoardViewModel.stopTimer()
+        mGameChronometerView.stop(gameBoardViewModel.elapsedSeconds())
     }
 
-    private fun getResourceId(x: Int, y: Int): Int {
-        val resourceId = when (mFieldObjects[x][y]?.squareImageToShow) {
-            Constants.MINE -> R.drawable.mine
-            Constants.ONE -> R.drawable.one
-            Constants.TWO -> R.drawable.two
-            Constants.THREE -> R.drawable.three
-            Constants.FOUR -> R.drawable.four
-            Constants.FIVE -> R.drawable.five
-            Constants.SIX -> R.drawable.six
-            Constants.SEVEN -> R.drawable.seven
-            Constants.EIGHT -> R.drawable.eight
+    private fun onGameLost() {
+        setFaceImage(FaceType.KILLED, false)
+        stopTimer()
+        AlertDialogUtil.showLoseMessageDialog(requireContext(),
+            { dialog, _ ->
+                dialog.dismiss()
+                startNewGame()
+            },
+            { dialog, _ ->
+                dialog.dismiss()
+            })
+    }
+
+    private fun onGameWon(board: Board) {
+        Log.d(TAG, "You won!")
+        setFaceImage(FaceType.HAPPY, false)
+        // The first tap can win a very small board, before the timer was ever started.
+        gameBoardViewModel.startTimer()
+        stopTimer()
+
+        val localRecordItem = LocalRecordItem()
+        localRecordItem.numberOfMines = board.mineCount.toLong()
+        localRecordItem.fieldSize = (board.width * board.height).toLong()
+        localRecordItem.timeInSeconds = gameBoardViewModel.elapsedSeconds().toLong()
+        localRecordItem.timeStamp = System.currentTimeMillis()
+        gameBoardViewModel.setNewRecord(localRecordItem)
+
+        AlertDialogUtil.showWinMessageDialog(requireContext(),
+            { dialog, _ ->
+                dialog.dismiss()
+                startNewGame()
+            },
+            { dialog, _ ->
+                dialog.dismiss()
+            })
+    }
+
+    private fun renderSquare(board: Board, x: Int, y: Int) {
+        squareImages[y * board.width + x].setImageResource(squareDrawable(board, x, y))
+    }
+
+    @DrawableRes
+    private fun squareDrawable(board: Board, x: Int, y: Int): Int = when (board.state(x, y)) {
+        CellState.COVERED -> R.drawable.covered
+        CellState.FLAGGED -> R.drawable.flaged
+        CellState.REVEALED -> if (board.isMine(x, y)) R.drawable.mine else when (board.adjacentMines(x, y)) {
+            1 -> R.drawable.one
+            2 -> R.drawable.two
+            3 -> R.drawable.three
+            4 -> R.drawable.four
+            5 -> R.drawable.five
+            6 -> R.drawable.six
+            7 -> R.drawable.seven
+            8 -> R.drawable.eight
             else -> R.drawable.uncovered
         }
-        return resourceId
-    }
-
-    private fun initMineField() {
-        mMineFiled.columnCount = mHorizontalSize
-        mMineFiled.orientation = GridLayout.HORIZONTAL
-        for (j in 0 until mVerticalSize) {
-            for (i in 0 until mHorizontalSize) {
-                val squareView = layoutInflater.inflate(R.layout.square_layout, null)
-                val imageView = squareView.findViewById<ImageView>(R.id.image_button)
-                imageView.setImageDrawable(ResourcesCompat.getDrawable(resources, R.drawable.covered, null))
-                mFieldObjects[i][j]?.squareView = squareView
-                mMineFiled.addView(squareView)
-                setOnClickListener(i, j, mFieldObjects[i][j], imageView, getResourceId(i, j))
-                setOnLongClickListener(mFieldObjects[i][j], imageView)
-            }
-        }
-    }
-
-    private fun setOnClickListener(xPos: Int, yPos: Int, fieldObject: FieldObject?, imageView: ImageView, resourceId: Int) {
-        fieldObject?.squareView?.setOnClickListener(View.OnClickListener {
-            if (resourceId == R.drawable.uncovered) {
-                setFaceImage(FaceType.SCARED, true)
-                unCoverEmptySquares(xPos, yPos)
-            } else if (resourceId == R.drawable.mine) {
-                setFaceImage(FaceType.KILLED, false)
-                uncoverAllSquares()
-                mGameChronometerView.stopTimer()
-                AlertDialogUtil.showLoseMessageDialog(requireContext(),
-                    { dialog, _ ->
-                        dialog.dismiss()
-                        restartGamingBoard()
-                    },
-                    { dialog, _ ->
-                        dialog.dismiss()
-                    })
-                return@OnClickListener
-            }
-            imageView.setImageDrawable(ResourcesCompat.getDrawable(resources, resourceId, null))
-            mGameChronometerView.startTimer()
-        })
-    }
-
-    private fun setOnLongClickListener(fieldObject: FieldObject?, imageView: ImageView) {
-        fieldObject?.squareView?.setOnLongClickListener(View.OnLongClickListener {
-            Log.d(TAG, "CounterNumberOfMines: $mCounterNumberOfMines")
-            if (fieldObject.isFlagged) {
-                Log.d(TAG, "Square unflagged")
-                setFaceImage(FaceType.ANGRY, true)
-                mCounterNumberOfMines++
-                imageView.setImageDrawable(
-                    ResourcesCompat.getDrawable(
-                        resources,
-                        R.drawable.covered,
-                        null
-                    )
-                )
-                fieldObject.isFlagged = false
-                minesCounterView.updateCounter(mCounterNumberOfMines)
-                return@OnLongClickListener true
-            }
-            if (fieldObject.isCovered) {
-                Log.d(TAG, "Square flagged")
-                setFaceImage(FaceType.SCARED, true)
-                mCounterNumberOfMines--
-                if (mCounterNumberOfMines >= 0) {
-                    if (fieldObject.squareImageToShow == Constants.MINE) {
-                        mMinesFound++
-                    }
-                    if (mMinesFound == mDefaultNumberOfMines) {
-                        Log.d(TAG, "You won!$mMinesFound")
-                        setFaceImage(FaceType.HAPPY, false)
-
-                        val localRecordItem = LocalRecordItem()
-                        gameBoardViewModel.getNumberOfMines()?.toLong()?.let { localRecordItem.numberOfMines = it }
-                        gameBoardViewModel.getFieldSize()?.toLong()?.let { localRecordItem.fieldSize = it }
-                        localRecordItem.timeInSeconds = mGameChronometerView.mChronometerTime.toLong()
-                        localRecordItem.timeStamp = System.currentTimeMillis()
-                        gameBoardViewModel.setNewRecord(localRecordItem)
-
-                        AlertDialogUtil.showWinMessageDialog(requireContext(),
-                            { dialog, _ ->
-                                dialog.dismiss()
-                                restartGamingBoard()
-                            },
-                            { dialog, _ ->
-                                dialog.dismiss()
-                            })
-                        mGameChronometerView.stopTimer()
-                        return@OnLongClickListener true
-                    }
-                    imageView.setImageDrawable(
-                        ResourcesCompat.getDrawable(
-                            resources,
-                            R.drawable.flaged,
-                            null
-                        )
-                    )
-                    fieldObject.isFlagged = true
-                    minesCounterView.updateCounter(mCounterNumberOfMines)
-                }
-            }
-            true
-        })
-    }
-
-    private fun uncoverAllSquares() {
-        for (j in 0 until mVerticalSize) {
-            for (i in 0 until mHorizontalSize) {
-                unCoverSquare(i, j)
-                mFieldObjects[i][j]?.squareView?.setOnClickListener(null)
-                mFieldObjects[i][j]?.squareView?.setOnLongClickListener(null)
-            }
-        }
-        mMineFiled.isClickable = false
     }
 
     private fun setFaceImage(faceType: FaceType, keepSmiling: Boolean) {
@@ -477,19 +322,10 @@ class MineFieldFragment : Fragment() {
             FaceType.SCARED -> R.drawable.scared
             FaceType.SMILE -> R.drawable.smile
         }
-        mFace.setImageDrawable(ResourcesCompat.getDrawable(resources, resource, null))
+        mFace.removeCallbacks(resetFace)
+        mFace.setImageResource(resource)
         if (keepSmiling) {
-            Handler().postDelayed({ mFace.setImageDrawable(ResourcesCompat.getDrawable(resources, R.drawable.smile, null)) }, 500)
+            mFace.postDelayed(resetFace, FACE_RESET_DELAY_MS)
         }
-    }
-
-    private fun restartGamingBoard() {
-        findNavController().navigate(
-            R.id.mineFieldFragment,
-            arguments,
-            NavOptions.Builder()
-                .setPopUpTo(R.id.mineFieldFragment, true)
-                .build()
-        )
     }
 }

@@ -4,17 +4,13 @@ import android.content.Context
 import android.util.AttributeSet
 import android.widget.ImageView
 import androidx.constraintlayout.widget.ConstraintLayout
-import androidx.core.content.res.ResourcesCompat
 import com.msmikeescom.minesweeper.R
 
 class MinesCounterView : ConstraintLayout {
-    companion object {
-        private const val TAG = "MinesCounterView"
-    }
 
-    private var hundredsImageView: ImageView? = null
-    private var tensImageView: ImageView? = null
-    private var unitsImageView: ImageView? = null
+    private lateinit var hundredsImageView: ImageView
+    private lateinit var tensImageView: ImageView
+    private lateinit var unitsImageView: ImageView
 
     constructor(context: Context, attrs: AttributeSet?, defStyle: Int) : super(context, attrs, defStyle) {
         initView()
@@ -24,7 +20,7 @@ class MinesCounterView : ConstraintLayout {
         initView()
     }
 
-    constructor(context: Context) : super(context){
+    constructor(context: Context) : super(context) {
         initView()
     }
 
@@ -35,30 +31,11 @@ class MinesCounterView : ConstraintLayout {
         unitsImageView = findViewById(R.id.counter_units)
     }
 
+    /** Shows [number], clamped to the 0..999 the three digits can display. */
     fun updateCounter(number: Int) {
-        var numberTemp = number
-        val units = numberTemp % 10
-        numberTemp /= 10
-        val tens = numberTemp % 10
-        numberTemp /= 10
-        val hundreds = numberTemp % 10
-        unitsImageView?.let { setImageNumber(it, units) }
-        tensImageView?.let { setImageNumber(it, tens) }
-        hundredsImageView?.let { setImageNumber(it, hundreds) }
-    }
-
-    private fun setImageNumber(imageView: ImageView, digit: Int) {
-        when (digit) {
-            0 -> imageView.setImageDrawable(ResourcesCompat.getDrawable(resources, R.drawable.zero_digit, null))
-            1 -> imageView.setImageDrawable(ResourcesCompat.getDrawable(resources, R.drawable.one_digit, null))
-            2 -> imageView.setImageDrawable(ResourcesCompat.getDrawable(resources, R.drawable.two_digit, null))
-            3 -> imageView.setImageDrawable(ResourcesCompat.getDrawable(resources, R.drawable.three_digit, null))
-            4 -> imageView.setImageDrawable(ResourcesCompat.getDrawable(resources, R.drawable.four_digit, null))
-            5 -> imageView.setImageDrawable(ResourcesCompat.getDrawable(resources, R.drawable.five_digit, null))
-            6 -> imageView.setImageDrawable(ResourcesCompat.getDrawable(resources, R.drawable.six_digit, null))
-            7 -> imageView.setImageDrawable(ResourcesCompat.getDrawable(resources, R.drawable.seven_digit, null))
-            8 -> imageView.setImageDrawable(ResourcesCompat.getDrawable(resources, R.drawable.eight_digit, null))
-            9 -> imageView.setImageDrawable(ResourcesCompat.getDrawable(resources, R.drawable.nine_digit, null))
-        }
+        val value = number.coerceIn(0, 999)
+        unitsImageView.setImageResource(DigitDrawables.forDigit(value % 10))
+        tensImageView.setImageResource(DigitDrawables.forDigit(value / 10 % 10))
+        hundredsImageView.setImageResource(DigitDrawables.forDigit(value / 100))
     }
 }
