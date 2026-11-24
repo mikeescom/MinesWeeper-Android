@@ -22,7 +22,6 @@ import com.msmikeescom.minesweeper.repository.local.sharepreferences.MinesWeeper
 import com.msmikeescom.minesweeper.repository.remote.realtimedatabase.RealTimeDatabase
 import com.msmikeescom.minesweeper.repository.remote.realtimedatabase.model.RemoteRecordItem
 import com.msmikeescom.minesweeper.utilities.Security
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -85,11 +84,16 @@ class LogInViewModel : ViewModel() {
         }
     }
 
-    fun initViewModel(context: Context) = viewModelScope.launch(Dispatchers.Default) {
+    /**
+     * Sets up the repository and auth synchronously so they are ready before the login fragment
+     * checks for a signed-in user. Safe to call again after the activity is recreated.
+     */
+    fun initViewModel(context: Context) {
+        if (::mainRepository.isInitialized) return
         Log.d(TAG, "initViewModel")
         try {
             mainRepository = MainRepository(
-                sharePreferences = MinesWeeperSharedPreferences.instance(context),
+                sharePreferences = MinesWeeperSharedPreferences.instance(context.applicationContext),
                 database = MinesWeeperDatabase.instance(context),
                 realTimeDatabase = RealTimeDatabase.instance()
             )

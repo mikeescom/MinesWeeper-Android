@@ -24,6 +24,7 @@
     <string name="settings_dialog_title">Settings</string>
     <string name="settings_dialog_msg">Do you want to save your settings changes?</string>
     <string name="settings_no_mines_entered">Number of mines must be entered</string>
+    <string name="settings_invalid_number_of_mines">Number of mines must be between 1 and %1$d</string>
     <!-- Strings related to login -->
     <string name="prompt_email">Email</string>
     <string name="prompt_password">Password</string>

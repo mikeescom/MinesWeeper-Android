@@ -1,30 +1,38 @@
 package com.msmikeescom.minesweeper.ui.view
 
 import android.content.Context
-import android.os.CountDownTimer
+import android.os.SystemClock
 import android.util.AttributeSet
-import android.util.Log
 import android.widget.ImageView
 import androidx.constraintlayout.widget.ConstraintLayout
-import androidx.core.content.res.ResourcesCompat
 import com.msmikeescom.minesweeper.R
 
-class GameChronometerView: ConstraintLayout {
+/**
+ * Shows elapsed time as MM:SS. The start time is supplied by the caller (and kept in the
+ * ViewModel) so the display survives the view being recreated. Ticking stops automatically when
+ * the view is detached, so no timer outlives its screen.
+ */
+class GameChronometerView : ConstraintLayout {
 
     companion object {
-        private const val TAG = "GameChronometerView"
+        private const val MAX_SECONDS = 99 * 60 + 59
+        private const val TICK_MILLIS = 250L
     }
 
-    private var tensMinutes: ImageView? = null
-    private var unitsMinutes: ImageView? = null
-    private var tensSeconds: ImageView? = null
-    private var unitsSeconds: ImageView? = null
+    private lateinit var tensMinutes: ImageView
+    private lateinit var unitsMinutes: ImageView
+    private lateinit var tensSeconds: ImageView
+    private lateinit var unitsSeconds: ImageView
 
-    var mChronometerTime = 0
-        private set
-    var mTimerStarted = false
-        private set
-    private var mCountDownTimer: CountDownTimer? = null
+    private var startedAt: Long? = null
+
+    private val ticker = object : Runnable {
+        override fun run() {
+            val start = startedAt ?: return
+            show(((SystemClock.elapsedRealtime() - start) / 1000).toInt())
+            postDelayed(this, TICK_MILLIS)
+        }
+    }
 
     constructor(context: Context, attrs: AttributeSet?, defStyle: Int) : super(context, attrs, defStyle) {
         initView()
@@ -34,7 +42,7 @@ class GameChronometerView: ConstraintLayout {
         initView()
     }
 
-    constructor(context: Context) : super(context){
+    constructor(context: Context) : super(context) {
         initView()
     }
 
@@ -46,75 +54,44 @@ class GameChronometerView: ConstraintLayout {
         unitsSeconds = findViewById(R.id.units_seconds)
     }
 
-    fun startTimer() {
-        if (mTimerStarted) {
-            return
-        }
-        mTimerStarted = true
-        val tensMinutesImageView = findViewById<ImageView>(R.id.tens_minutes)
-        val unitsMinutesImageView = findViewById<ImageView>(R.id.units_minutes)
-        val tensSecondsImageView = findViewById<ImageView>(R.id.tens_seconds)
-        val unitsSecondsImageView = findViewById<ImageView>(R.id.units_seconds)
-        mCountDownTimer = object : CountDownTimer(3600000, 1000) {
-            override fun onTick(millisUntilFinished: Long) {
-                Log.d(TAG, "millisUntilFinished: $millisUntilFinished")
-                Log.d(TAG, "millisSinceStarted: " + (3600000 - millisUntilFinished))
-                val millisSinceStarted = 3600000 - millisUntilFinished
-                val secondsSinceStarted = (millisSinceStarted - millisSinceStarted % 1000) / 1000
-                var seconds: Int
-                mChronometerTime = secondsSinceStarted.toInt()
-                Log.d(TAG, "Time: $mChronometerTime")
-                var minutes: Int = mChronometerTime / 60
-                seconds = mChronometerTime - minutes * 60
-                if (mChronometerTime % 60 != 0) {
-                    val units = seconds % 10
-                    seconds /= 10
-                    val tens = seconds % 10
-                    setImageNumber(unitsSecondsImageView, units)
-                    setImageNumber(tensSecondsImageView, tens)
-                } else {
-                    val units = minutes % 10
-                    minutes /= 10
-                    val tens = minutes % 10
-                    setImageNumber(unitsMinutesImageView, units)
-                    setImageNumber(tensMinutesImageView, tens)
-                    setImageNumber(unitsSecondsImageView, 0)
-                    setImageNumber(tensSecondsImageView, 0)
-                }
-            }
-
-            override fun onFinish() {
-                setImageNumber(unitsMinutesImageView, 0)
-                setImageNumber(tensMinutesImageView, 0)
-                setImageNumber(unitsSecondsImageView, 0)
-                setImageNumber(tensSecondsImageView, 0)
-            }
-        }
-        mCountDownTimer?.start()
+    /** Starts ticking from [startedAtElapsedRealtime], a [SystemClock.elapsedRealtime] value. */
+    fun start(startedAtElapsedRealtime: Long) {
+        startedAt = startedAtElapsedRealtime
+        removeCallbacks(ticker)
+        ticker.run()
     }
 
-    fun stopTimer() {
-        if (!mTimerStarted) {
-            return
+    /** Stops ticking and shows [seconds]. */
+    fun stop(seconds: Int) {
+        startedAt = null
+        removeCallbacks(ticker)
+        show(seconds)
+    }
+
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+        if (startedAt != null) {
+            removeCallbacks(ticker)
+            ticker.run()
         }
-        mTimerStarted = false
-        if (mCountDownTimer != null) {
-            mCountDownTimer!!.cancel()
-        }
+    }
+
+    override fun onDetachedFromWindow() {
+        removeCallbacks(ticker)
+        super.onDetachedFromWindow()
+    }
+
+    private fun show(seconds: Int) {
+        val clamped = seconds.coerceIn(0, MAX_SECONDS)
+        val minutes = clamped / 60
+        val secs = clamped % 60
+        setImageNumber(tensMinutes, minutes / 10)
+        setImageNumber(unitsMinutes, minutes % 10)
+        setImageNumber(tensSeconds, secs / 10)
+        setImageNumber(unitsSeconds, secs % 10)
     }
 
     private fun setImageNumber(imageView: ImageView, digit: Int) {
-        when (digit) {
-            0 -> imageView.setImageDrawable(ResourcesCompat.getDrawable(resources, R.drawable.zero_digit, null))
-            1 -> imageView.setImageDrawable(ResourcesCompat.getDrawable(resources, R.drawable.one_digit, null))
-            2 -> imageView.setImageDrawable(ResourcesCompat.getDrawable(resources, R.drawable.two_digit, null))
-            3 -> imageView.setImageDrawable(ResourcesCompat.getDrawable(resources, R.drawable.three_digit, null))
-            4 -> imageView.setImageDrawable(ResourcesCompat.getDrawable(resources, R.drawable.four_digit, null))
-            5 -> imageView.setImageDrawable(ResourcesCompat.getDrawable(resources, R.drawable.five_digit, null))
-            6 -> imageView.setImageDrawable(ResourcesCompat.getDrawable(resources, R.drawable.six_digit, null))
-            7 -> imageView.setImageDrawable(ResourcesCompat.getDrawable(resources, R.drawable.seven_digit, null))
-            8 -> imageView.setImageDrawable(ResourcesCompat.getDrawable(resources, R.drawable.eight_digit, null))
-            9 -> imageView.setImageDrawable(ResourcesCompat.getDrawable(resources, R.drawable.nine_digit, null))
-        }
+        imageView.setImageResource(DigitDrawables.forDigit(digit))
     }
 }

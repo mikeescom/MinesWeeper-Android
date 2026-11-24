@@ -10,7 +10,8 @@
         android:theme="@style/Theme.AppCompat">
         <activity
             android:name=".ui.activity.GameBoardActivity"
-            android:exported="true" />
+            android:exported="false"
+            android:screenOrientation="portrait" />
         <activity
             android:name=".ui.activity.LogInActivity"
             android:exported="true">
