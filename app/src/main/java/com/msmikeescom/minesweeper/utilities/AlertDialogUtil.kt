@@ -52,19 +52,6 @@ object AlertDialogUtil {
         return true
     }
 
-    fun showEditNumberOfMinesDialog(context: Context,
-                                    editText: EditText,
-                                    positiveButtonAction: ((DialogInterface, Int) -> Unit),
-                                    negativeButtonAction: ((DialogInterface, Int) -> Unit)) {
-        createCustomAlertDialog(
-            context = context,
-            alertTitle = "Edit number of mines",
-            editText = editText,
-            positiveButton = Pair("Update", positiveButtonAction),
-            negativeButton = Pair("Cancel", negativeButtonAction)
-        )?.show()
-    }
-
     fun showGameWillBeRestartedDialog(context: Context,
                                       positiveButtonAction: ((DialogInterface, Int) -> Unit),
                                       negativeButtonAction: ((DialogInterface, Int) -> Unit)) {

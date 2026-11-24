@@ -1,17 +1,14 @@
 package com.msmikeescom.minesweeper.ui.fragment
 
 import android.os.Bundle
-import android.text.InputType
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.MenuInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.EditText
 import android.widget.GridLayout
 import android.widget.ImageView
 import android.widget.PopupMenu
-import android.widget.Toast
 import androidx.annotation.DrawableRes
 import androidx.core.view.doOnLayout
 import androidx.fragment.app.Fragment
@@ -137,43 +134,13 @@ class MineFieldFragment : Fragment() {
         inflater.inflate(R.menu.menu_account_settings, popup.menu)
         popup.setOnMenuItemClickListener { menuItem ->
             when (menuItem.itemId) {
-                R.id.numberOfMines -> showEditNumberOfMinesDialog()
+                R.id.action_settings -> findNavController().navigate(R.id.action_mineFieldFragment_to_settingsFragment)
                 R.id.action_records -> findNavController().navigate(R.id.action_mineFieldFragment_to_personalRecordsFragment)
                 R.id.action_logout -> listener.logOut()
             }
             true
         }
         popup.show()
-    }
-
-    private fun showEditNumberOfMinesDialog() {
-        val maxMines = Board.maxMines(fittedWidth, fittedHeight)
-        val editText = EditText(requireContext()).also {
-            it.inputType = InputType.TYPE_CLASS_NUMBER
-        }
-        AlertDialogUtil.showEditNumberOfMinesDialog(requireContext(),
-            editText,
-            { dialog, _ ->
-                dialog.dismiss()
-                val text = editText.text.toString()
-                val numberOfMines = text.toIntOrNull()
-                when {
-                    text.isEmpty() -> showToast(getString(R.string.settings_no_mines_entered))
-                    numberOfMines == null || numberOfMines !in 1..maxMines ->
-                        showToast(getString(R.string.settings_invalid_number_of_mines, maxMines))
-                    else -> {
-                        gameBoardViewModel.saveNumberOfMines(numberOfMines)
-                        startNewGame()
-                    }
-                }
-            },
-            { dialog, _ ->
-                dialog.dismiss()
-            })
-    }
-
-    private fun showToast(message: String) {
-        Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show()
     }
 
     private fun startNewGame() {
