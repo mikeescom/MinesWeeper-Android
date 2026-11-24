@@ -7,11 +7,11 @@ import android.view.View
 import android.widget.ProgressBar
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.FragmentContainerView
-import androidx.lifecycle.ViewModelProvider
 import com.msmikeescom.minesweeper.R
 import com.msmikeescom.minesweeper.utilities.setUpFullScreen
-import com.msmikeescom.minesweeper.viewmodel.GameBoardViewModel
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class GameBoardActivity : AppCompatActivity(), IGameBoardUIListener {
     companion object {
         private const val TAG = "GameBoardActivity"
@@ -25,16 +25,10 @@ class GameBoardActivity : AppCompatActivity(), IGameBoardUIListener {
         findViewById(R.id.nav_host_fragment)
     }
 
-    private lateinit var gameBoardViewModel: GameBoardViewModel
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_game_board)
         setUpFullScreen(findViewById(R.id.app_container_frame))
-
-        gameBoardViewModel = ViewModelProvider(this)[GameBoardViewModel::class.java].also {
-            it.initViewModel(this)
-        }
     }
 
     override fun onShowProgress() {

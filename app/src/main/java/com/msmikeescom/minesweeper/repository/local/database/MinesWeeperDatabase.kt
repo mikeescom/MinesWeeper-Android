@@ -15,17 +15,12 @@ abstract class MinesWeeperDatabase : RoomDatabase() {
     companion object {
         private const val TAG = "MinesWeeperDatabase"
         private const val DATABASE_NAME = "minesweeperdatabase"
-        @Volatile
-        private var mInstance: MinesWeeperDatabase? = null
 
-        fun instance(context: Context): MinesWeeperDatabase =
-            mInstance ?: synchronized(this) {
-                mInstance ?: Room.databaseBuilder(context.applicationContext, MinesWeeperDatabase::class.java, DATABASE_NAME)
-                    .fallbackToDestructiveMigrationFrom(1).build()
-                    .also {
-                        mInstance = it
-                        Log.d(TAG, "initialized")
-                    }
-            }
+        /** Builds the database. Hilt provides it as a singleton (see AppModule). */
+        fun build(context: Context): MinesWeeperDatabase =
+            Room.databaseBuilder(context.applicationContext, MinesWeeperDatabase::class.java, DATABASE_NAME)
+                .fallbackToDestructiveMigrationFrom(1)
+                .build()
+                .also { Log.d(TAG, "initialized") }
     }
 }

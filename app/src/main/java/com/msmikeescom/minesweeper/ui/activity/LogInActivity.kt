@@ -7,15 +7,17 @@ import android.util.Log
 import android.view.View
 import android.widget.ProgressBar
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.fragment.app.FragmentContainerView
-import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.findNavController
 import com.msmikeescom.minesweeper.R
 import com.msmikeescom.minesweeper.utilities.setUpFullScreen
 import com.msmikeescom.minesweeper.viewmodel.LogInViewModel
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class LogInActivity : AppCompatActivity(), ILogInUIListener {
 
     companion object {
@@ -30,7 +32,7 @@ class LogInActivity : AppCompatActivity(), ILogInUIListener {
         findViewById(R.id.nav_host_fragment)
     }
 
-    private lateinit var logInViewModel: LogInViewModel
+    private val logInViewModel: LogInViewModel by viewModels()
 
     /** The game screen finishes with RESULT_OK when the player logs out. */
     private val gameBoardLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -47,10 +49,6 @@ class LogInActivity : AppCompatActivity(), ILogInUIListener {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
         setUpFullScreen(findViewById(R.id.app_container_frame))
-
-        logInViewModel = ViewModelProvider(this)[LogInViewModel::class.java].also {
-            it.initViewModel(this)
-        }
     }
 
     override fun onShowProgressBar() {
@@ -72,7 +70,7 @@ class LogInActivity : AppCompatActivity(), ILogInUIListener {
     }
 
     private fun logOut() {
-        logInViewModel.logOut(applicationContext)
+        logInViewModel.logOut()
         findNavController(R.id.nav_host_fragment).navigate(R.id.loginFragment)
     }
 }

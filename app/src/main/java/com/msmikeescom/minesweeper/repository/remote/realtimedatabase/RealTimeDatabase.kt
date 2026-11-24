@@ -6,28 +6,20 @@ import com.google.firebase.database.DatabaseException
 import com.google.firebase.Firebase
 import com.google.firebase.database.database
 import com.msmikeescom.minesweeper.repository.remote.realtimedatabase.model.RemoteRecordItem
+import javax.inject.Inject
+import javax.inject.Singleton
 
 /**
  * Records are stored at `users/<Firebase Auth uid>/<push id>`. The database rules in
  * `database.rules.json` only let a signed-in user read and write their own node.
  */
-class RealTimeDatabase private constructor() {
+@Singleton
+class RealTimeDatabase @Inject constructor() {
     private val usersReference = Firebase.database.reference.child(USERS_TABLE)
 
     companion object {
         const val USERS_TABLE = "users"
         private const val TAG = "RealTimeDatabase"
-
-        @Volatile
-        private var mInstance: RealTimeDatabase? = null
-
-        fun instance(): RealTimeDatabase =
-            mInstance ?: synchronized(this) {
-                mInstance ?: RealTimeDatabase().also {
-                    mInstance = it
-                    Log.d(TAG, "initialized")
-                }
-            }
     }
 
     fun addUserListener(userId: String, listener: ChildEventListener) {

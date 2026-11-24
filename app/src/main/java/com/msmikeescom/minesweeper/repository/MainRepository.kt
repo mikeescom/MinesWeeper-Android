@@ -1,6 +1,5 @@
 package com.msmikeescom.minesweeper.repository
 
-import android.content.Context
 import com.google.firebase.database.ChildEventListener
 import com.msmikeescom.minesweeper.repository.local.database.MinesWeeperDatabase
 import com.msmikeescom.minesweeper.repository.local.database.dto.LocalRecordItem
@@ -11,18 +10,15 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class MainRepository(sharePreferences: MinesWeeperSharedPreferences,
-                     database: MinesWeeperDatabase,
-                     realTimeDatabase: RealTimeDatabase) {
-
-    companion object {
-        fun create(context: Context) = MainRepository(
-            sharePreferences = MinesWeeperSharedPreferences.instance(context.applicationContext),
-            database = MinesWeeperDatabase.instance(context),
-            realTimeDatabase = RealTimeDatabase.instance()
-        )
-    }
+@Singleton
+class MainRepository @Inject constructor(
+    sharePreferences: MinesWeeperSharedPreferences,
+    database: MinesWeeperDatabase,
+    realTimeDatabase: RealTimeDatabase,
+) {
 
     private val mutex: Mutex = Mutex()
     private val sharePref = sharePreferences

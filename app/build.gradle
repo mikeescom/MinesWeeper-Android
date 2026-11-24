@@ -2,6 +2,7 @@ apply plugin: 'com.android.application'
 apply plugin: 'com.google.gms.google-services'
 apply plugin: 'kotlin-android'
 apply plugin: 'com.google.devtools.ksp'
+apply plugin: 'com.google.dagger.hilt.android'
 apply plugin: 'com.google.firebase.crashlytics'
 
 android {
@@ -67,6 +68,10 @@ dependencies {
     implementation "androidx.room:room-ktx:$roomVersion"
     implementation 'androidx.preference:preference-ktx:1.2.1'
     ksp "androidx.room:room-compiler:$roomVersion"
+
+    // Hilt
+    implementation 'com.google.dagger:hilt-android:2.52'
+    ksp 'com.google.dagger:hilt-compiler:2.52'
 
     // Navigation
     implementation "androidx.navigation:navigation-fragment-ktx:$navigationVersion"

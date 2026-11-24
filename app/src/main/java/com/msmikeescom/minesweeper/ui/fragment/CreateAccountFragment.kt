@@ -8,7 +8,8 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
-import androidx.lifecycle.ViewModelProvider
+import androidx.fragment.app.activityViewModels
+import dagger.hilt.android.AndroidEntryPoint
 import androidx.navigation.fragment.findNavController
 import com.msmikeescom.minesweeper.R
 import com.msmikeescom.minesweeper.ui.activity.ILogInUIListener
@@ -16,6 +17,7 @@ import com.msmikeescom.minesweeper.ui.activity.LogInActivity
 import com.msmikeescom.minesweeper.utilities.AlertDialogUtil
 import com.msmikeescom.minesweeper.viewmodel.LogInViewModel
 
+@AndroidEntryPoint
 class CreateAccountFragment : Fragment() {
     companion object {
         private const val TAG = "CreateAccountFragment"
@@ -26,7 +28,7 @@ class CreateAccountFragment : Fragment() {
     private lateinit var createAccountButton: Button
     private lateinit var returnToLogInButton: Button
 
-    private lateinit var logInViewModel: LogInViewModel
+    private val logInViewModel: LogInViewModel by activityViewModels()
     private lateinit var listener: ILogInUIListener
     private val logInActivity: LogInActivity
         get() = activity as LogInActivity
@@ -42,7 +44,6 @@ class CreateAccountFragment : Fragment() {
         listener = logInActivity
         listener.onShowProgressBar()
 
-        logInViewModel = ViewModelProvider(logInActivity)[LogInViewModel::class.java]
 
         initViews(view)
     }
