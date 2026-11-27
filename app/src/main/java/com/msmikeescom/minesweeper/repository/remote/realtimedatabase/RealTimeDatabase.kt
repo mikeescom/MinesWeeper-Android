@@ -6,6 +6,7 @@ import com.google.firebase.database.DatabaseException
 import com.google.firebase.Firebase
 import com.google.firebase.database.database
 import com.msmikeescom.minesweeper.repository.remote.realtimedatabase.model.RemoteRecordItem
+import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -36,6 +37,11 @@ class RealTimeDatabase @Inject constructor() {
         reference.setValue(remoteRecordItem)
             .addOnFailureListener { Log.e(TAG, "addNewRecord failed", it) }
         return reference.key
+    }
+
+    /** Deletes every record stored for [userId]. */
+    suspend fun deleteUserRecords(userId: String) {
+        usersReference.child(userId).removeValue().await()
     }
 
     /**
