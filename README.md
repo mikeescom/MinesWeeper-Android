@@ -28,7 +28,7 @@ plays by the same rules.
 | Area | Library |
 | --- | --- |
 | Language | Kotlin 2.0, Java 17 |
-| Build | Android Gradle Plugin 8.5, Gradle 8.7, KSP |
+| Build | Android Gradle Plugin 8.13, Gradle 8.13, KSP |
 | UI | Views, Fragments, Navigation component |
 | Dependency injection | Hilt |
 | Local storage | Room, SharedPreferences |
@@ -36,7 +36,7 @@ plays by the same rules.
 | Sign-in | Credential Manager with Sign in with Google |
 | Images | Glide |
 
-Min SDK 26 (Android 8.0), target SDK 34.
+Min SDK 26 (Android 8.0), target SDK 36 (Android 16).
 
 ## Project structure
 
