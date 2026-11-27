@@ -95,6 +95,10 @@ class MainRepository @Inject constructor(
     fun addNewRecord(userId: String, remoteRecordItem: RemoteRecordItem): String? =
         realTimeDatabase.addNewRecord(userId, remoteRecordItem)
 
+    suspend fun deleteServerRecords(userId: String) {
+        realTimeDatabase.deleteUserRecords(userId)
+    }
+
     fun copyLegacyRecords(fromUserId: String, toUserId: String) {
         realTimeDatabase.copyLegacyRecords(fromUserId, toUserId)
     }

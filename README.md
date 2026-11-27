@@ -18,7 +18,8 @@ plays by the same rules.
 - **Custom difficulty:** set the number of mines (1 to the number of squares minus 1, at most
   999) from the account menu.
 - **Accounts:** Sign in with Google (Credential Manager) or with email and password, including
-  account creation and password reset.
+  account creation and password reset. Players can delete their account and all their records
+  from Settings, as Google Play requires.
 - **Records:** every win is saved to Firebase Realtime Database and cached on the device. The
   Records screen ranks them by mines per square, then by time.
 

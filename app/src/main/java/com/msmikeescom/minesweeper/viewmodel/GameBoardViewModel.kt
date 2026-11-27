@@ -6,11 +6,15 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.map
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import android.content.Context
+import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.database.ChildEventListener
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.DatabaseException
+import com.msmikeescom.minesweeper.auth.GoogleSignInHelper
 import com.msmikeescom.minesweeper.game.Board
 import com.msmikeescom.minesweeper.game.RecordRanking
 import com.msmikeescom.minesweeper.repository.MainRepository
@@ -18,6 +22,7 @@ import com.msmikeescom.minesweeper.repository.local.database.dto.LocalRecordItem
 import com.msmikeescom.minesweeper.repository.remote.realtimedatabase.model.RemoteRecordItem
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
 @HiltViewModel
@@ -122,6 +127,35 @@ class GameBoardViewModel @Inject constructor(
     /** The signed-in player's email, shown on the settings screen. */
     val userEmail: String?
         get() = auth.currentUser?.email
+
+    /** True when the player signed in with email and password, so deletion needs their password. */
+    val usesEmailSignIn: Boolean
+        get() = auth.currentUser?.providerData.orEmpty().any { it.providerId == EmailAuthProvider.PROVIDER_ID } &&
+            auth.currentUser?.providerData.orEmpty().none { it.providerId == GoogleAuthProvider.PROVIDER_ID }
+
+    /**
+     * Deletes the player's account and their records on the server, as Google Play and the
+     * App Store require. Firebase needs a recent sign-in first, so this asks the player to
+     * confirm with Google again (from [activityContext]) or uses [password] for email accounts.
+     * Throws GetCredentialCancellationException if they cancel Google's sheet.
+     * The caller then logs out, which clears this device.
+     */
+    suspend fun deleteAccount(activityContext: Context, password: String?) {
+        val user = checkNotNull(auth.currentUser) { "No one is signed in" }
+        val credential = if (usesEmailSignIn) {
+            val confirmedPassword = password?.takeIf { it.isNotEmpty() }
+                ?: throw IllegalArgumentException("Password is required")
+            EmailAuthProvider.getCredential(checkNotNull(user.email), confirmedPassword)
+        } else {
+            GoogleSignInHelper.firebaseCredential(activityContext)
+        }
+        user.reauthenticate(credential).await()
+
+        mainRepository.removeUserListener(user.uid, childEventListener)
+        mainRepository.deleteServerRecords(user.uid)
+        user.delete().await()
+        userId = null
+    }
 
     /** Largest mine count the current board allows. */
     fun maxMines(): Int = board?.let { Board.maxMines(it.width, it.height) } ?: Board.MAX_DISPLAYABLE_MINES

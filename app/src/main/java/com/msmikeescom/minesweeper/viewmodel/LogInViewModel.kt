@@ -4,16 +4,12 @@ import android.content.Context
 import android.util.Log
 import androidx.credentials.ClearCredentialStateRequest
 import androidx.credentials.CredentialManager
-import androidx.credentials.CustomCredential
-import androidx.credentials.GetCredentialRequest
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
-import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
-import com.msmikeescom.minesweeper.R
+import com.msmikeescom.minesweeper.auth.GoogleSignInHelper
 import com.msmikeescom.minesweeper.repository.MainRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -40,14 +36,7 @@ class LogInViewModel @Inject constructor(
      * [context] must be an Activity context. Throws if the player cancels or sign-in fails.
      */
     suspend fun signInWithGoogle(context: Context) {
-        val option = GetSignInWithGoogleOption.Builder(context.getString(R.string.default_web_client_id)).build()
-        val request = GetCredentialRequest.Builder().addCredentialOption(option).build()
-        val credential = CredentialManager.create(context).getCredential(context, request).credential
-        check(credential is CustomCredential && credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
-            "Unexpected credential type ${credential.type}"
-        }
-        val idToken = GoogleIdTokenCredential.createFrom(credential.data).idToken
-        auth.signInWithCredential(GoogleAuthProvider.getCredential(idToken, null)).await()
+        auth.signInWithCredential(GoogleSignInHelper.firebaseCredential(context)).await()
     }
 
     /**
